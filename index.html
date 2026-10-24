@@ -553,8 +553,8 @@ const TIER_LABELS=["First songs: white keys, small range, slow", "Easy: few blac
    3. State
    ========================================================= */
 const KEY='pianoCoach.v1';
-const defaultState={onboarded:false,unlocked:1,days:{},practice:[],settings:{notation:'both',sens:3,theme:'auto',pass:80},best:{}};
-let S=load();
+const defaultState={onboarded:false,unlocked:1,days:{},practice:[],settings:{notation:'both',sens:3,theme:'auto',pass:80},best:{},skills:{},lastTest:null};
+let S=load();S.skills=S.skills||{};
 function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v)return Object.assign({},defaultState,v,{settings:Object.assign({},defaultState.settings,v.settings||{})})}catch(e){}return JSON.parse(JSON.stringify(defaultState))}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -678,16 +678,46 @@ const IC={
   keys:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="16" rx="3" opacity=".3"/><rect x="5" y="4" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="9" rx="1"/><rect x="16" y="4" width="3" height="9" rx="1"/></svg>',
 };
 const UNIT_COLORS=[['#8B6CFF','#6B4DE0'],['#3BA8FF','#1F86DB'],['#1FBF86','#16A06F'],['#FF7A45','#DE5A26'],['#FF4D9A','#D9327A'],['#FFB020','#D98E00']];
-const BLOCK_COLORS={'Warm-up':'#FFB020','Technique':'#8B6CFF','Scales and chords':'#3BA8FF','Rhythm':'#FF4D9A','Review':'#1FBF86'};
+const BLOCK_COLORS={'Yesterday, cold':'#1FBF86','Fix yesterday':'#FF4D6D','Review':'#1FBF86','Posture check':'#8B6CFF','New today':'#FF4D9A','Warm-up':'#FFB020','Technique':'#8B6CFF','Scales and chords':'#3BA8FF','Rhythm':'#FF4D9A','Review':'#1FBF86'};
 const blockColor=b=>BLOCK_COLORS[b.title]||(b.gate?'#FF7A45':'#3BA8FF');
 const ukey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+/* ---- Learning loop: yesterday-cold retrieval, fix-it loop, spaced review (Leitner) ---- */
+const INTERVALS=[0,1,2,4,7,14]; // days until due, by box 1..5
+function addDays(k,n){const [y,m,d]=k.split('-').map(Number);const t=new Date(y,m-1,d+n);return ukey(t)}
+function snapEx(ex){const o={};['t','h','n','f','bpm','how','song','part','film','lineStarts','nof'].forEach(k=>{if(ex[k]!=null)o[k]=ex[k]});return o}
+function updateSkill(b,sum){if(!b.ex||sum.self)return;const k=bestKey(b);const sk=S.skills[k]||{box:0,ex:snapEx(b.ex),base:b.ex.bpm};
+  const acc=sum.accuracy;sk.box=acc>=90?Math.min(5,sk.box+1):acc<70?1:Math.max(1,sk.box);sk.due=addDays(todayKey(),INTERVALS[sk.box]);sk.last=todayKey();sk.acc=acc;sk.wrongAt=sum.wrongAt||[];
+  if(!b.review&&!b.fix)sk.ex=snapEx(b.ex);S.skills[k]=sk}
+function fixLoop(ex,wrongAt){const ns=parseNotes(ex.n);let wi=0,wmax=-1;(wrongAt||[]).forEach((w,i)=>{if(w>wmax){wmax=w;wi=i}});if(wmax<=0)return null;
+  const a=Math.max(0,wi-2),z=Math.min(ns.length,wi+3);const chunk=ns.slice(a,z);const fs=fingersFor(ex).slice(a,z);
+  const rep=[...chunk,...chunk,...chunk];const n=rep.map(x=>midiName(x.m)+(x.d!==1?':'+x.d:'')).join(' ');
+  return {t:'Fix-it loop: '+ex.t,h:ex.h,n,f:fs.length===chunk.length?[...fs,...fs,...fs].join(' '):undefined,bpm:Math.max(40,(ex.bpm||60)-15),lineStarts:[0,chunk.length,chunk.length*2],
+    how:[`Only the ${chunk.length} notes around your trouble spot, ${letterOf(ns[wi].m)} / ${sargamOf(ns[wi].m)}. Three times.`,'Slower than feels needed. Three clean times in a row, then move on.']}}
+function composeDay(n){const base=DAYS[n-1];const day=Object.assign({},base,{blocks:base.blocks.map(b=>Object.assign({},b))});
+  const yKey=S.lastTest&&S.lastTest.day<n?S.lastTest:null;
+  const inject=[];
+  const baseKeys=new Set(day.blocks.filter(b=>b.ex).map(b=>bestKey(b)));
+  if(yKey){const yEx=S.skills[yKey.key]?S.skills[yKey.key].ex:null;const dup=baseKeys.has(yKey.key);
+    if(yEx&&!(dup&&!fixLoop(yEx,yKey.wrongAt))){const fx=(yKey.acc<90||dup)?fixLoop(yEx,yKey.wrongAt):null;
+      inject.push(fx?mk('ex','Fix yesterday',4,{ex:fx,fix:true,why:'Yesterday had a trouble spot. Fix only that bit, slowly.'})
+                 :mk('ex','Yesterday, cold',4,{ex:Object.assign({},yEx,{how:['Play it once from memory, before any Hear it. Recalling it is what makes it stick.','Then once more, a little faster.']}),review:true,why:'Play yesterday\'s test once from memory.'}))}}
+  // spaced review: due skills, not yesterday's, not today's gate
+  const todayKeys=new Set(day.blocks.filter(b=>b.ex).map(b=>bestKey(b)));if(yKey)todayKeys.add(yKey.key);
+  const due=Object.entries(S.skills).filter(([k,s])=>!todayKeys.has(k)&&s.due<=todayKey()).sort((a,b)=>a[1].box-b[1].box||(a[1].acc||0)-(b[1].acc||0));
+  if(due.length){const [k,s]=due[0];const ex=Object.assign({},s.ex,{bpm:(s.base||s.ex.bpm||60)+5*Math.max(0,s.box-1),how:['Review from an earlier day. Mixing old with new is harder, and that is why it sticks.',`Level ${s.box} of 5. Clean at 90% moves it up a level and adds 5 bpm.`]});
+    inject.push(mk('ex','Review',4,{ex,review:true,why:'An older item that is due again.'}))}
+  // insert: yesterday after warm-up, review before song
+  const wi=day.blocks.findIndex(b=>b.title==='Warm-up');const si=day.blocks.findIndex(b=>/^Song/.test(b.title));
+  const yb=inject.find(b=>b.title!=='Review'),rb=inject.find(b=>b.title==='Review');
+  if(rb&&si>=0)day.blocks.splice(si,0,rb);if(yb)day.blocks.splice(wi+1,0,yb);
+  fit(day);day.minutes=day.blocks.reduce((a,b)=>a+b.minutes,0);return day}
 function statBar(){return `<div class="statbar"><div class="stati day">${IC.cal}<span>Day ${Math.min(90,S.unlocked)}</span></div><div class="stati fire">${IC.fire}<span>${streak()}</span></div><div class="stati xp">${IC.gem}<span>${S.xp||0} XP</span></div></div>`}
 function unitBanner(wi,withBtn){const w=WEEKS[wi];const [c,d]=UNIT_COLORS[wi%UNIT_COLORS.length];
   return `<div class="unit" style="background:${c};box-shadow:0 4px 0 ${d}"><div style="flex:1;min-width:0"><div class="eyebrow">Week ${wi+1} of 13</div><h2>${esc(w.theme)}</h2><p>${esc(w.goal)}</p></div>${withBtn?`<button class="ubtn" data-tab="plan" aria-label="Open the plan">${IC.book}</button>`:''}</div>`}
 function nodeIcon(d){if(d.milestone)return IC.trophy;if(d.d===7)return IC.star;return IC.note}
 
 function todayHTML(){
-  const n=currentDayNum();const day=DAYS[n-1];const allDone=S.days[90]&&S.days[90].passed;
+  const n=currentDayNum();const day=composeDay(n);const allDone=S.days[90]&&S.days[90].passed;
   const passedToday=Object.entries(S.days).filter(([k,v])=>v.passed&&v.date===todayKey()).map(([k])=>+k);
   const lastDone=passedToday.length?passedToday[passedToday.length-1]:0;
   const wi=day.week-1;const weekDays=DAYS.filter(d=>d.week===day.week);
@@ -710,13 +740,21 @@ function todayHTML(){
     ${day.video?`<a class="vlink" style="margin-top:12px" href="${day.video.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(day.video.t)}</span></a>`:''}
     <p class="tiny" style="margin-top:8px">Pass the test with ${S.settings.pass}% to unlock Day ${Math.min(90,n+1)}.</p>
   </section>
+  <details class="card pad" style="margin-top:16px"><summary style="cursor:pointer;font-weight:700;list-style:none" class="row"><span style="flex:1">How each class works</span><span class="pill sky">Why</span></summary>
+    <ol class="how" style="margin-top:10px">
+      <li><b>Warm-up.</b> Slow five-finger playing to loosen the hands.</li>
+      <li><b>Yesterday, cold.</b> Play yesterday's test once from memory. Recalling it is what makes it stick. If it had mistakes, you get a fix-it loop on just the trouble spot.</li>
+      <li><b>Technique and New today.</b> One new thing, slow, in small pieces.</li>
+      <li><b>Review.</b> One older item that is due again. Clean items come back after 1, 2, 4, 7, then 14 days, 5 bpm faster each time. Shaky ones come back tomorrow.</li>
+      <li><b>Song.</b> Always last, so you finish on music.</li>
+    </ol></details>
   <section class="card pad stack" style="margin-top:16px"><div class="row"><h2 style="flex:1">This week</h2><span class="tiny">${S.practice.length} days practised</span></div><div class="week">${week}</div></section>
   ${!allDone?`<div class="startbar no-print"><button class="btn ${early?'btn-line':'btn-accent'} btn-block" data-start="${n}">${startLabel}</button></div>`:''}`;
 }
 function blockSub(b){if(b.type==='ex'){return b.ex.t+(b.ex.part&&b.ex.part!=='full'?', '+b.ex.part:'')}if(b.type==='rhythm')return `Metronome ${b.rhythm.bpm} bpm, ${b.rhythm.beats} beats`;return b.items?b.items[0]:''}
 
 function planHTML(){
-  let html=`${statBar()}<header class="stack"><h1>The 90-day course</h1><p class="muted">One 30-minute class a day. Each day opens when you pass the one before. Tap a day to see exactly what to practise.</p>
+  let html=`${statBar()}<header class="stack"><h1>The 90-day course</h1><p class="muted">One 30-minute class a day. Each day opens when you pass the one before. Tap a day to see what is new that day. Every class also opens with yesterday's test played from memory, and mixes in one older item that is due for review.</p>
   <button class="btn btn-line btn-sm no-print" id="printPlan">Print the plan</button></header>`;
   WEEKS.forEach((w,wi)=>{const days=DAYS.filter(d=>d.week===wi+1);if(!days.length)return;
     html+=`<section class="wk">${unitBanner(wi,false)}`;
@@ -824,9 +862,10 @@ function bindFree(){if(freeH)Ear.handlers.delete(freeH);const kb=$('#freeKb');le
    8. Session
    ========================================================= */
 let SES=null;
-function startSession(n){const day=DAYS[n-1];if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}
+function startSession(n){if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}
   const rec=S.days[n]||(S.days[n]={attempts:0,best:0,passed:false});
   const prev=rec.session&&rec.session.date===todayKey()&&!rec.passed?rec.session:null;
+  const day=prev&&prev.blocks?Object.assign({},DAYS[n-1],{blocks:prev.blocks}):composeDay(n);
   SES={n,day,bi:prev?prev.bi:0,started:Date.now(),blockStart:Date.now(),scores:prev?prev.scores:{},progress:prev?prev.progress||{}:{},selfDone:{},notesPlayed:0,wrong:0};
   if(!prev)rec.attempts++;save();wake(true);
   renderSession()}
@@ -872,7 +911,7 @@ function exHTML(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fing
   const how=ex.how||(ex.song?['Tap "Hear it" once. Then press "Check me" and play along.','The small number above each note is the finger to use: 1 is the thumb, 5 is the little finger.',ex.film?'Notes come from fan notation, moved to Sa = C. If one sounds off against the song, trust your ear.':'Say the sargam in your head as you play.']:[]);
   const best=S.best[bestKey(b)];
   return `<div class="row" style="flex-wrap:wrap;gap:8px"><span class="pill">${ex.h==='LH'?'Left hand':'Right hand'}</span><span class="pill">${ex.bpm} bpm</span>${ex.part&&ex.part!=='full'?`<span class="pill">${esc(ex.part)}</span>`:''}${b.gate?`<span class="pill accent">Test: ${S.settings.pass}% to pass</span>`:''}${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div>
-    <h1 style="font-size:28px;margin-top:2px">${esc(ex.t)}</h1>
+    <h1 style="font-size:28px;margin-top:2px">${esc(ex.t)}</h1>${b.why?`<p class="muted small" style="margin-top:-4px">${esc(b.why)}</p>`:''}
     <details class="howbox"${S.howOpen===false?'':' open'}><summary>How to play</summary><ol class="how">${how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol></details>
     <div class="hero" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say">${b.gate?'Today\'s test. Press Check me and play.':'Press Check me and play along.'}</div></div><div class="meter"><i id="mtr"></i></div></div>
     <div class="stripwrap"><div class="strip" id="strip">${chips}</div></div>
@@ -921,13 +960,14 @@ function spoken(m){const n=S.settings.notation;if(n==='letters')return midiName(
 function stopCheck(){document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null;const c=$('#check');if(c){c.textContent='Check me';c.classList.remove('live')}}}
 function recordScore(b,sum){const k=bestKey(b);S.best[k]=Math.max(S.best[k]||0,sum.accuracy);if(b.ex.song&&(b.ex.part==='full'||SES.songId))S.best['song:'+b.ex.song]=Math.max(S.best['song:'+b.ex.song]||0,sum.accuracy);
   SES.notesPlayed+=sum.notes;SES.wrong+=sum.wrong||0;
-  if(b.gate){const prev=SES.scores[SES.bi];if(!prev||sum.accuracy>prev.accuracy)SES.scores[SES.bi]=sum}save();logPractice()}
+  if(b.gate){const prev=SES.scores[SES.bi];if(!prev||sum.accuracy>prev.accuracy)SES.scores[SES.bi]=sum;if(SES.n&&!sum.self)S.lastTest={day:SES.n,key:bestKey(b),acc:Math.max(sum.accuracy,(S.lastTest&&S.lastTest.day===SES.n&&S.lastTest.key===bestKey(b))?S.lastTest.acc:0),wrongAt:sum.wrongAt}}
+  updateSkill(b,sum);save();logPractice()}
 function showExResult(b,sum){const pass=sum.accuracy>=S.settings.pass;const notes=parseNotes(b.ex.n);
   const worst=(sum.wrongAt||[]).map((w,i)=>({w,i})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w).slice(0,3).map(x=>spoken(notes[x.i].m)+(x.w>1?' ×'+x.w:'')).join(', ');
   const head=sum.self?'Self-checked':pass?(b.gate?'Test passed.':'Clean.'):'Not yet. Once more, slower.';
   $('#exResult').innerHTML=`<div class="result ${pass?'ok':'bad'}"><div class="display">${sum.accuracy}%</div><div style="flex:1"><b>${head}</b><div class="small">${sum.self?'Marked by you, counted at the pass mark.':`${sum.notes} notes, ${sum.wrong} wrong${worst?'. Trouble spots: '+worst:''}`}</div></div></div>`;
   const say=$('#say');if(say){say.className='hero-say';say.textContent=pass?'Move on when ready.':'Tap Hear it, then try again.'}}
-function saveSession(){if(!SES||!SES.n)return;const r=S.days[SES.n];if(!r)return;r.session={bi:SES.bi,scores:SES.scores,progress:SES.progress,date:todayKey()};save()}
+function saveSession(){if(!SES||!SES.n)return;const r=S.days[SES.n];if(!r)return;r.session={bi:SES.bi,scores:SES.scores,progress:SES.progress,date:todayKey(),blocks:SES.day.blocks.map(b=>Object.assign({},b,b.ex?{ex:snapEx(b.ex)}:{}))};save()}
 
 /* rhythm block */
 let metro=null;
