@@ -159,10 +159,10 @@ h2{font-size:19px;font-weight:700}
 .linkbtn{color:var(--sky);font-weight:700;font-size:14px}
 
 /* hero note */
-.hero{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:var(--r);background:var(--surface);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);transition:background .15s,border-color .15s}
+.hero{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--r);background:var(--surface);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);transition:background .15s,border-color .15s}
 .hero.ok{background:var(--ok-soft);border-color:var(--ok);box-shadow:0 4px 0 var(--ok)}
 .hero.bad{background:var(--bad-soft);border-color:var(--bad);box-shadow:0 4px 0 var(--bad)}
-.hero-note{font-weight:800;font-size:72px;line-height:1;min-width:110px;display:flex;align-items:baseline;gap:10px}
+.hero-note{font-weight:800;font-size:56px;line-height:1;min-width:92px;display:flex;align-items:baseline;gap:8px}
 .hero-note small{font-size:26px;font-weight:600;color:var(--ink-2)}
 .hero-side{flex:1;min-width:0}
 .hero-f{display:inline-flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#fff;background:var(--sky);padding:6px 14px;border-radius:12px;box-shadow:0 3px 0 var(--sky-d)}
@@ -191,6 +191,21 @@ h2{font-size:19px;font-weight:700}
 .chip.miss{border-color:var(--bad);box-shadow:0 3px 0 var(--bad)}
 .chip.wide{min-width:70px}
 .chip .octd{font-size:10px;vertical-align:sub;opacity:.6}
+.extitle{font-size:24px;line-height:1.15}
+.ibtn{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);font-weight:800;font-size:18px;font-style:italic;font-family:Georgia,serif;color:var(--sky);background:var(--surface)}
+.ibtn{font-family:var(--text);font-style:normal}
+.ngrid{display:flex;flex-direction:column;gap:8px}
+.nrow{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:14px;background:var(--surface-2)}
+.ngrid .chip{width:44px;flex:0 0 auto;padding:4px 2px 6px;border-radius:10px;box-shadow:0 2px 0 var(--line)}
+.ngrid .chip .l{font-size:17px}
+.ngrid .chip .s{font-size:11px}
+.ngrid .chip .f{font-size:11px;height:13px}
+.chip.demo{background:var(--sky-soft);border-color:var(--sky)}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,12,20,.45);z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg[hidden]{display:none}
+.sheet{width:100%;max-width:560px;background:var(--surface);border-radius:24px 24px 0 0;padding:12px 20px calc(20px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;animation:up .2s ease}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
 .lmark{flex:none;width:3px;margin:8px 2px;border-radius:2px;background:var(--line)}
 
 /* keyboard */
@@ -260,7 +275,7 @@ select,input[type=range]{font:inherit;accent-color:var(--accent)}
 .songrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:2px solid var(--surface-2);width:100%;text-align:left}
 @media (max-width:560px){ h1{font-size:30px} .kb{height:140px} .kw,.kb_{--kw:38px} .hero-note{font-size:58px;min-width:90px} .hero-note small{font-size:20px} .hero-f{font-size:16px} .fbtn{padding:0 14px} .btn{font-size:15px} }
 .unit h2{overflow-wrap:anywhere}
-@media (max-width:420px){.unit h2{font-size:19px}.hide-sm{display:none} #hear{width:56px;padding:0} .fbtn{padding:0 12px;font-size:14px}}
+@media (max-width:420px){.unit h2{font-size:19px}.hide-sm{display:none} .fbtn{padding:0 12px;font-size:14px}}
 @media print{ .tabs,.no-print,.startbar{display:none!important} .app{padding:0} .daydetail{display:block!important} }
 </style>
 </head>
@@ -598,9 +613,9 @@ async function openMic(){
   c.createMediaStreamSource(micStream).connect(analyser);return true}
 async function calibrate(ms=900){const samples=[];const end=performance.now()+ms;while(performance.now()<end){analyser.getFloatTimeDomainData(Ear.buf);samples.push(rmsOf(Ear.buf));await new Promise(r=>setTimeout(r,30))}
   samples.sort((a,b)=>a-b);Ear.noise=Math.max(SYNTH_MIC?.0005:.002,samples[Math.floor(samples.length*.9)]||.002);return Ear.noise}
-function earStart(){if(Ear.on)return;Ear.on=true;requestAnimationFrame(earTick)}
-function earStop(){Ear.on=false}
-function earTick(){if(!Ear.on)return;requestAnimationFrame(earTick);if((Ear.frame++)%2)return; // ~30fps
+function earStart(){if(Ear.on)return;Ear.on=true;Ear.int=setInterval(earTick,33)}
+function earStop(){Ear.on=false;clearInterval(Ear.int)}
+function earTick(){if(!Ear.on)return;Ear.frame++; // ~30 checks per second
   analyser.getFloatTimeDomainData(Ear.buf);const level=rmsOf(Ear.buf);const gate=Ear.noise*S.settings.sens;
   Ear.env=.6*Ear.env+.4*level;Ear.envMin=Math.min(Ear.envMin*1.02+1e-5,Ear.env);let onset=false;
   if(Ear.armed&&Ear.env>gate&&Ear.env>Ear.envMin*1.8){onset=true;Ear.armed=false}
@@ -888,10 +903,9 @@ function renderSession(){
   el.innerHTML=`<div class="s-top"><div class="s-top-inner"><button aria-label="Close" id="sClose" class="iconbtn">${ICON.x}</button><div class="bar"><i style="width:${Math.max(4,bi/day.blocks.length*100)}%"></i></div><div class="timer" id="timer">${b.minutes}:00</div></div><div class="s-title"><span>${day.n?'Day '+day.n+' · ':''}${esc(b.title)}</span><span>${bi+1} of ${day.blocks.length}</span></div></div>
   <div class="s-body stack">${content}
   ${b.items&&b.items.length&&b.type!=='self'?`<div class="card pad"><h2 style="font-size:16px;margin-bottom:6px">Also do</h2>${selfHTML(b.items,true)}</div>`:''}
-  ${b.cue?`<div class="warnbar" style="background:var(--sky-soft);color:var(--ink)"><b style="color:var(--sky-d)">Hand tip:</b> ${esc(b.cue)}</div>`:''}
-  ${(bi===0||isLast||b.type==='self')&&vids.length?`<div class="stack" style="margin-top:20px"><div class="eyebrow">${bi===0?'Watch first (Hindi)':'Watch again'}</div>${vids.map(v=>`<a class="vlink" href="${v.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(v.t)}</span></a>`).join('')}</div>`:''}
-  </div>
-  <div class="s-foot"><div class="s-foot-inner">${bi>0?'<button class="btn btn-ghost btn-icon" id="sPrev" aria-label="Previous block">‹</button>':''}${b.type==='ex'?`<button class="btn btn-ghost fbtn" id="hear" aria-label="Hear it">${ICON.play}<span class="hide-sm">Hear it</span></button><button class="btn btn-accent fbtn grow" id="check">Check me</button>`:'<span class="spacer"></span>'}<button class="btn ${isLast?'btn-accent':'btn-primary'} fbtn" id="sNext">${isLast?'Finish':'Next'}</button></div></div>`;
+  ${b.type==='self'&&vids.length?`<div class="stack" style="margin-top:20px"><div class="eyebrow">${bi===0?'Watch first (Hindi)':'Watch again'}</div>${vids.map(v=>`<a class="vlink" href="${v.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(v.t)}</span></a>`).join('')}</div>`:''}
+  </div>${b.type!=='self'?infoHTML(b,day,vids):''}
+  <div class="s-foot"><div class="s-foot-inner">${bi>0?'<button class="btn btn-ghost btn-icon" id="sPrev" aria-label="Previous block">‹</button>':''}${b.type==='ex'?`<button class="btn btn-ghost fbtn grow" id="hear" aria-label="Hear it">${ICON.play}<span>Hear it</span></button><button class="btn btn-ghost btn-icon" id="restart" aria-label="Start over">↺</button>`:'<span class="spacer"></span>'}<button class="btn ${isLast?'btn-accent':'btn-primary'} fbtn" id="sNext">${isLast?'Finish':'Next'}</button></div></div>`;
   el.scrollTop=0;
   $('#sClose').onclick=()=>{if(confirm('Leave this class? Your progress today is saved. You can continue later.'))closeSession()};
   $('#sNext').onclick=()=>{if(isLast)finishSession();else{SES.bi++;saveSession();renderSession()}};
@@ -899,65 +913,70 @@ function renderSession(){
   const total=b.minutes*60;SES.timerInt=setInterval(()=>{const t=$('#timer');if(!t)return;const left=total-Math.floor((Date.now()-SES.blockStart)/1000);
     t.textContent=(left<0?'+':'')+Math.floor(Math.abs(left)/60)+':'+String(Math.abs(left)%60).padStart(2,'0');t.classList.toggle('over',left<0);if(left===0&&!SES.chimed){SES.chimed=true;chime()}},500);SES.chimed=false;
   bindSelf(el);
+  const ib=$('#infoBtn'),sb=$('#sheetBg');if(ib&&sb){ib.onclick=()=>{sb.hidden=false};sb.onclick=e=>{if(e.target===sb||e.target.id==='sheetClose')sb.hidden=true}}
   if(b.type==='ex')bindEx(b);else if(b.type==='rhythm')bindRhythm(b);
 }
 function selfHTML(items,inner){const key=SES.bi;return (inner?'':'<div class="card pad">')+items.map((t,i)=>{const on=SES.selfDone[key+':'+i];return `<button class="check${on?' on':''}" data-chk="${key}:${i}"><span class="box"></span><span>${esc(t)}</span></button>`}).join('')+(inner?'':'</div>')}
 function bindSelf(el){el.querySelectorAll('[data-chk]').forEach(b=>b.onclick=()=>{const k=b.dataset.chk;SES.selfDone[k]=!SES.selfDone[k];b.classList.toggle('on')})}
 
+function infoHTML(b,day,vids){const ex=b.ex;
+  const how=b.type==='ex'?(ex.how||(ex.song?['Tap Hear it once. Then just play: the mic follows you.','Small blue number = finger. 1 is the thumb, 5 the little finger.',ex.film?'Notes come from fan notation, moved to Sa = C. If one sounds off against the song, trust your ear.':'Say the sargam in your head as you play.']:[])):b.type==='rhythm'?[b.rhythm.how,'Start slow. Add 4 bpm only after a clean minute.','Check my timing: 4 clicks, then silence. Keep the beat on your own.']:[];
+  return `<div class="sheet-bg" id="sheetBg" hidden><div class="sheet" role="dialog" aria-label="About this block"><div class="grab"></div>
+    ${b.why?`<p class="muted" style="margin-bottom:10px">${esc(b.why)}</p>`:''}
+    ${how.length?`<ol class="how">${how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol>`:''}
+    ${b.cue?`<div class="warnbar" style="margin-top:12px;background:var(--sky-soft);color:var(--ink)"><b style="color:var(--sky-d)">Hand tip:</b> ${esc(b.cue)}</div>`:''}
+    ${vids.map(v=>`<a class="vlink" style="margin-top:12px" href="${v.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(v.t)}</span></a>`).join('')}
+    <button class="btn btn-primary btn-block" style="margin-top:16px" id="sheetClose">Got it</button></div></div>`}
+function noteRows(ex,notes){const ls=ex.lineStarts&&ex.lineStarts.length>1?ex.lineStarts:null;const rows=[];
+  if(ls){ls.forEach((a,i)=>rows.push([a,i+1<ls.length?ls[i+1]:notes.length]))}else{const per=notes.length<=10?notes.length:8;for(let a=0;a<notes.length;a+=per)rows.push([a,Math.min(notes.length,a+per)])}
+  // split very long lines
+  return rows}
 function exHTML(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);
   const ms=notes.map(x=>x.m);const lo=Math.min(...ms),hi=Math.max(...ms);
-  const lineStarts=ex.lineStarts||[];
-  const chips=notes.map((x,i)=>{const L=noteLabel(x.m);return `${lineStarts.includes(i)&&i>0?'<div class="lmark"></div>':''}<div class="chip${L.big.length>3?' wide':''}" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}${S.settings.notation!=='sargam'?`<span class="octd">${octOf(x.m)}</span>`:''}</div><div class="s">${esc(L.small)}</div></div>`}).join('');
-  const how=ex.how||(ex.song?['Tap "Hear it" once. Then press "Check me" and play along.','The small number above each note is the finger to use: 1 is the thumb, 5 is the little finger.',ex.film?'Notes come from fan notation, moved to Sa = C. If one sounds off against the song, trust your ear.':'Say the sargam in your head as you play.']:[]);
+  const chip=(x,i)=>{const L=noteLabel(x.m);return `<div class="chip" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}</div><div class="s">${esc(L.small)}</div></div>`};
+  const grid=noteRows(ex,notes).map(([a,z])=>`<div class="nrow">${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div>`).join('');
   const best=S.best[bestKey(b)];
-  return `<div class="row" style="flex-wrap:wrap;gap:8px"><span class="pill">${ex.h==='LH'?'Left hand':'Right hand'}</span><span class="pill">${ex.bpm} bpm</span>${ex.part&&ex.part!=='full'?`<span class="pill">${esc(ex.part)}</span>`:''}${b.gate?`<span class="pill accent">Test: ${S.settings.pass}% to pass</span>`:''}${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div>
-    <h1 style="font-size:28px;margin-top:2px">${esc(ex.t)}</h1>${b.why?`<p class="muted small" style="margin-top:-4px">${esc(b.why)}</p>`:''}
-    <details class="howbox"${S.howOpen===false?'':' open'}><summary>How to play</summary><ol class="how">${how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol></details>
-    <div class="hero" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say">${b.gate?'Today\'s test. Press Check me and play.':'Press Check me and play along.'}</div></div><div class="meter"><i id="mtr"></i></div></div>
-    <div class="stripwrap"><div class="strip" id="strip">${chips}</div></div>
+  return `<div class="row" style="align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><h1 class="extitle">${esc(ex.t)}</h1><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${b.gate?`<span class="pill accent">Test · ${S.settings.pass}%</span>`:''}<span class="pill">${ex.h==='LH'?'Left hand':'Right hand'} · ${ex.bpm} bpm</span>${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div></div><button class="ibtn" id="infoBtn" aria-label="How to play">i</button></div>
+    <div id="micGate"></div><div class="hero" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-f" id="heroF"></div><div class="hero-side"><div class="hero-say" id="say"></div><button class="linkbtn" id="skipN" hidden>Skip this note</button></div><div class="meter"><i id="mtr"></i></div></div>
     <div id="kbx">${keyboardHTML(Math.min(lo,60),Math.max(hi,71))}</div>
-    <div class="row tiny" style="justify-content:space-between"><span id="sayS">Heard: –</span><button class="linkbtn" id="skipN" hidden>Skip this note</button></div>
-    <div id="exResult"></div>
-    <div id="selfWrap" hidden><button class="btn btn-line btn-sm" id="selfOk">No mic: I played it cleanly 3 times</button></div>`}
+    <div class="ngrid" id="strip">${grid}</div>
+    <div id="exResult"></div>`}
 function bestKey(b){return b.ex.song?'song:'+b.ex.song+':'+(b.ex.part||'full'):'ex:'+b.ex.t}
 let checkState=null;
-document.addEventListener('keydown',e=>{if(!SES)return;if(e.code==='Space'&&$('#check')){e.preventDefault();$('#check').click()}else if(e.code==='ArrowRight'&&$('#sNext')){$('#sNext').click()}});
+document.addEventListener('keydown',e=>{if(!SES)return;if(e.code==='Space'&&$('#hear')){e.preventDefault();$('#hear').click()}else if(e.code==='ArrowRight'&&$('#sNext')){$('#sNext').click()}});
 function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);const strip=$('#strip'),kbx=$('#kbx');
   const chipAt=i=>strip.querySelector(`.chip[data-i="${i}"]`);
-  const hero=$('#hero'),heroNote=$('#heroNote'),heroF=$('#heroF'),say=$('#say');
-  const setHero=(i,state)=>{const n=notes[i];if(!n){heroNote.textContent='✓';heroF.textContent='';return}const L=noteLabel(n.m);heroNote.innerHTML=`${esc(L.big)}${L.small?`<small>${esc(L.small)}</small>`:''}`;heroF.textContent=fingers[i]?`Finger ${fingers[i]}`:'';hero.className='hero'+(state?' '+state:'')};
-  const setCur=i=>{strip.querySelectorAll('.chip').forEach(c=>c.classList.toggle('cur',+c.dataset.i===i));const c=chipAt(i);if(c)strip.scrollLeft=c.offsetLeft-strip.clientWidth/2+c.clientWidth/2;
-    kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));if(notes[i]){const k=keyEl(kbx,notes[i].m);if(k){k.classList.add('k-target');const w=kbx.querySelector('.kbwrap');w.scrollLeft=k.offsetLeft-w.clientWidth/2}}setHero(i)};
-  const prog=SES.progress[SES.bi]||{i:0,wrong:0,wrongAt:notes.map(()=>0)};
-  for(let i=0;i<prog.i;i++){const c=chipAt(i);c&&c.classList.add('ok')}
-  setCur(prog.i);
-  const hearBtn=$('#hear'),checkBtn=$('#check');
-  hearBtn.onclick=()=>{if(checkState){toast('Stop the check first');return}const c=ac();const beat=60/ex.bpm;let t=c.currentTime+.15;const start=t;
-    notes.forEach((x,i)=>{pluck(x.m,t,x.d*beat);const at=(t-start)*1000;setTimeout(()=>{setCur(i);flashKey(kbx,x.m,'k-ok',Math.max(150,x.d*beat*900))},at);t+=x.d*beat});
-    Ear.muteUntil=performance.now()+(t-start)*1000+600;setTimeout(()=>setCur(SES.progress[SES.bi]?SES.progress[SES.bi].i:0),(t-start)*1000+200)};
-  checkBtn.onclick=async()=>{if(checkState){stopCheck();return}
-    const ok=await startMicWithCalib(say);if(!ok){say.textContent='Mic not available.';$('#selfWrap').hidden=false;return}
-    let startI=0,carry={wrong:0,wrongAt:notes.map(()=>0)};const pr=SES.progress[SES.bi];
-    if(pr&&pr.i>0&&pr.i<notes.length){startI=pr.i;carry=pr}else{strip.querySelectorAll('.chip').forEach(c=>c.classList.remove('ok','miss'));$('#exResult').innerHTML=''}
-    setCur(startI);checkBtn.textContent='Stop';checkBtn.classList.add('live');say.className='hero-say';say.textContent=startI?'Picking up where you stopped.':'Play the highlighted key.';
-    let missesHere=0;
+  const hero=$('#hero'),heroNote=$('#heroNote'),heroF=$('#heroF'),say=$('#say');let round=1;
+  const setHero=i=>{const n=notes[i];if(!n){heroNote.textContent='';heroF.textContent='';return}const L=noteLabel(n.m);heroNote.innerHTML=`${esc(L.big)}${L.small?`<small>${esc(L.small)}</small>`:''}`;heroF.textContent=fingers[i]?`Finger ${fingers[i]}`:''};
+  const setCur=(i,scroll)=>{strip.querySelectorAll('.chip.cur').forEach(c=>c.classList.remove('cur'));const c=chipAt(i);if(c){c.classList.add('cur');if(scroll){const r=c.getBoundingClientRect();if(r.bottom>innerHeight-110||r.top<120)c.scrollIntoView({block:'center',behavior:'smooth'})}}
+    kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));if(notes[i]){const k=keyEl(kbx,notes[i].m);if(k){k.classList.add('k-target');const w=kbx.querySelector('.kbwrap');if(k.offsetLeft<w.scrollLeft||k.offsetLeft>w.scrollLeft+w.clientWidth-40)w.scrollLeft=k.offsetLeft-w.clientWidth/2}}setHero(i)};
+  const status=(t,cls)=>{say.className='hero-say'+(cls?' '+cls:'');say.textContent=t};
+  setCur(0);
+  $('#hear').onclick=()=>{const c=ac();const beat=60/ex.bpm;let t=c.currentTime+.15;const start=t;const cur=checkState?checkState.wm.state.i:0;
+    notes.forEach((x,i)=>{pluck(x.m,t,x.d*beat);const at=(t-start)*1000;setTimeout(()=>{flashKey(kbx,x.m,'k-ok',Math.max(150,x.d*beat*900));const c=chipAt(i);c&&c.classList.add('demo');setTimeout(()=>c&&c.classList.remove('demo'),Math.max(150,x.d*beat*900))},at);t+=x.d*beat});
+    const dur=(t-start)*1000;Ear.muteUntil=performance.now()+dur+600;status('Listen…');setTimeout(()=>{if(checkState)status('Your turn. Play along.')},dur+300)};
+  $('#restart').onclick=()=>{if(checkState)startRound(true)};
+  async function micOn(){const ok=await startMicWithCalib(say);if(!ok){status('Mic is off.','bad');$('#exResult').innerHTML=`<button class="btn btn-line btn-block" id="selfOk">No mic: I played it cleanly 3 times</button>`;$('#selfOk').onclick=()=>{const sum={notes:notes.length,wrong:0,accuracy:S.settings.pass,self:true};recordScore(b,sum);showExResult(b,sum);saveSession()};return}
+    S.micOk=true;save();startRound(false)}
+  function startRound(reset){if(checkState){Ear.handlers.delete(checkState.h);checkState=null}
+    strip.querySelectorAll('.chip').forEach(c=>c.classList.remove('ok','miss'));if(reset)$('#exResult').innerHTML='';
+    setCur(0,true);status(round>1?`Round ${round}. Go again.`:'Listening. Just play.');document.body.classList.add('listening');let miss=0;
     const wm=createWaitMode(notes.map(x=>x.m),{
-      next:i=>{missesHere=0;$('#skipN').hidden=true;setCur(i);say.className='hero-say';say.textContent=i===startI?'':'';SES.progress[SES.bi]={i:lineStartBefore(ex,i),wrong:wm.state.wrong,wrongAt:wm.state.wrongAt.slice()};saveSession()},
-      correct:(i,skipped)=>{const c=chipAt(i);c&&c.classList.add(skipped?'miss':'ok');if(!skipped){flashKey(kbx,notes[i].m,'k-ok',250);hero.className='hero ok';setTimeout(()=>hero.classList.remove('ok'),220)}},
-      wrong:(heard,want,i)=>{missesHere++;const c=chipAt(i);c&&c.classList.add('miss');flashKey(kbx,heard,'k-bad',500);hero.className='hero bad';say.className='hero-say bad';say.textContent=direction(heard,want);if(missesHere>=4)$('#skipN').hidden=false},
-      done:sum=>{stopCheck(false);delete SES.progress[SES.bi];kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));strip.querySelectorAll('.cur').forEach(e=>e.classList.remove('cur'));setHero(-1);recordScore(b,sum);showExResult(b,sum);saveSession()}},startI);
-    wm.state.wrong=carry.wrong||0;wm.state.wrongAt=(carry.wrongAt||notes.map(()=>0)).slice();
-    const h=f=>{updMeter(f);const ss=$('#sayS');if(ss&&f.midi!=null)ss.textContent='Heard: '+spoken(f.midi);wm.onFrame(f)};
-    checkState={h,wm};document.body.classList.add('listening');Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
-    if(SYNTH_MIC)window.__autoplay&&window.__autoplay(notes.slice(startI),ex.bpm)};
-  $('#selfOk').onclick=()=>{const sum={notes:notes.length,wrong:0,accuracy:S.settings.pass,self:true};recordScore(b,sum);showExResult(b,sum);saveSession()};
+      next:i=>{miss=0;$('#skipN').hidden=true;setCur(i,true);if(say.classList.contains('bad'))status('Good. Keep going.')},
+      correct:(i,sk)=>{const c=chipAt(i);c&&c.classList.add(sk?'miss':'ok');if(!sk){flashKey(kbx,notes[i].m,'k-ok',250);hero.classList.add('ok');setTimeout(()=>hero.classList.remove('ok'),220)}},
+      wrong:(heard,want,i)=>{miss++;const c=chipAt(i);c&&c.classList.add('miss');flashKey(kbx,heard,'k-bad',500);hero.classList.add('bad');setTimeout(()=>hero.classList.remove('bad'),400);status(direction(heard,want),'bad');if(miss>=4)$('#skipN').hidden=false},
+      done:sum=>{recordScore(b,sum);showExResult(b,sum);saveSession();kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));round++;
+        status(sum.accuracy>=S.settings.pass?'Nice. Next round starts in a moment.':'Again, slower. Starting over.');setTimeout(()=>{if(checkState&&checkState.wm===wm)startRound(false)},2600)}});
+    const h=f=>{updMeter(f);wm.onFrame(f)};checkState={h,wm};Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
+    if(SYNTH_MIC&&window.__autoplay&&!window.__noAuto)window.__autoplay(notes,ex.bpm)}
+  if(Ear.on||S.micOk)micOn();else{status('Tap Hear it to listen first.');$('#micGate').innerHTML=`<button class="btn btn-accent btn-block" id="micBtn">Turn on the mic</button><p class="tiny" style="text-align:center;margin-top:6px">Once. After that it just listens while you play.</p>`;$('#micBtn').onclick=()=>{$('#micGate').innerHTML='';micOn()}}
 }
 function lineStartBefore(ex,i){const ls=ex.lineStarts||[0];let r=0;for(const x of ls)if(x<=i)r=x;return r}
 function direction(heard,want){const d=want-heard;const W=spoken(want);
-  if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. Play ${W} ${d>0?'higher':'lower'}.`;
-  const n=Math.abs(d);return `${n===1?'One key':n+' keys'} to the ${d>0?'right':'left'}: ${W}`}
+  if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. ${W} ${d>0?'higher':'lower'}.`;
+  const n=Math.abs(d);return `${n===1?'One key':n+' keys'} ${d>0?'right':'left'}: ${W}`}
 function spoken(m){const n=S.settings.notation;if(n==='letters')return midiName(m);if(n==='sargam')return sargamOf(m);return `${letterOf(m)} (${sargamOf(m)})`}
-function stopCheck(){document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null;const c=$('#check');if(c){c.textContent='Check me';c.classList.remove('live')}}}
+function stopCheck(){document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null}}
 function recordScore(b,sum){const k=bestKey(b);S.best[k]=Math.max(S.best[k]||0,sum.accuracy);if(b.ex.song&&(b.ex.part==='full'||SES.songId))S.best['song:'+b.ex.song]=Math.max(S.best['song:'+b.ex.song]||0,sum.accuracy);
   SES.notesPlayed+=sum.notes;SES.wrong+=sum.wrong||0;
   if(b.gate){const prev=SES.scores[SES.bi];if(!prev||sum.accuracy>prev.accuracy)SES.scores[SES.bi]=sum;if(SES.n&&!sum.self)S.lastTest={day:SES.n,key:bestKey(b),acc:Math.max(sum.accuracy,(S.lastTest&&S.lastTest.day===SES.n&&S.lastTest.key===bestKey(b))?S.lastTest.acc:0),wrongAt:sum.wrongAt}}
@@ -972,8 +991,7 @@ function saveSession(){if(!SES||!SES.n)return;const r=S.days[SES.n];if(!r)return
 /* rhythm block */
 let metro=null;
 function rhythmHTML(b){const r=b.rhythm;SES.bpm=SES.bpm||r.bpm;
-  return `<div><span class="pill">${r.beats} beats</span><h1 style="font-size:30px;margin-top:10px">Rhythm</h1></div>
-  <ol class="how"><li>${esc(r.how)}</li><li>Start slow. When it feels easy for a full minute, add 4 bpm.</li><li>"Check my timing" plays 4 clicks, then goes silent. Keep clapping, or tap middle C, on every beat.</li></ol>
+  return `<div class="row" style="align-items:flex-start;gap:10px"><div style="flex:1"><h1 class="extitle">Rhythm</h1><p class="muted small" style="margin-top:4px">${esc(r.how)}</p></div><button class="ibtn" id="infoBtn" aria-label="How to practise">i</button></div>
   <div class="card pad stack"><div class="row" style="justify-content:center;gap:18px"><button class="btn btn-ghost btn-sm" id="bpmDn">−4</button><div class="bpm" id="bpm">${r.bpm}</div><button class="btn btn-ghost btn-sm" id="bpmUp">+4</button></div><div class="tiny" style="text-align:center">beats per minute</div>
   <div class="beats" id="beats" style="justify-content:center">${Array.from({length:r.beats},(_,i)=>`<div class="beat${i===0||(r.beats===8&&i===4)?' acc':''}">${i+1}</div>`).join('')}</div>
   <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="metroBtn">${ICON.play} Start metronome</button><button class="btn btn-line" id="timeBtn">Check my timing</button></div>
