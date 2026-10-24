@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F2F3F8; --ink:#262A3F; --ink-2:#5D627A; --ink-3:#9AA0B5;
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F2F3F8; --ink:#262A3F; --ink-2:#5D627A; --ink-3:#868CA3;
   --line:#E4E6EF; --edge:#D6D9E5;
   --accent:#FF7A45; --accent-d:#DE5A26; --accent-soft:#FFE9DE;
   --ok:#1FBF86; --ok-d:#16A06F; --ok-soft:#DDF7EC;
@@ -80,7 +80,7 @@ h2{font-size:19px;font-weight:700}
 .unit .ubtn svg{width:22px;height:22px}
 
 /* path */
-.path{position:relative;display:flex;flex-direction:column;align-items:center;gap:40px;padding:64px 0 24px}
+.path{position:relative;display:flex;flex-direction:column;align-items:center;gap:40px;padding:64px 0 120px}
 .node{position:relative;width:76px;height:70px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--surface-2);box-shadow:0 7px 0 var(--edge);transition:transform .1s}
 .node svg{width:32px;height:32px}
 .node:active{transform:translateY(5px);box-shadow:0 2px 0 var(--edge)}
@@ -170,6 +170,7 @@ h2{font-size:19px;font-weight:700}
 .hero-say{font-size:16px;font-weight:600;color:var(--ink-2);margin-top:8px}
 .hero-say.bad{color:var(--bad-d)}
 .meter{width:10px;height:56px;border-radius:6px;background:var(--surface-2);position:relative;overflow:hidden;flex:none}
+.hero .meter{visibility:hidden} body.listening .hero .meter{visibility:visible}
 .meter i{position:absolute;left:0;right:0;bottom:0;background:var(--ok);height:0;transition:height .06s}
 .listen{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-s);background:var(--surface-2)}
 .heard{font-size:30px;font-weight:800;min-width:84px}
@@ -234,8 +235,8 @@ h2{font-size:19px;font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .stat{border-radius:16px;border:2px solid var(--c);overflow:hidden;text-align:center;background:var(--surface)}
 .stat span{display:block;background:var(--c);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
-.stat b{display:block;font-size:24px;font-weight:800;padding:10px 4px;color:var(--c)}
-.stat.gold{--c:var(--gold-d)} .stat.ok{--c:var(--ok)} .stat.sky{--c:var(--sky)}
+.stat b{display:block;font-size:24px;font-weight:800;padding:10px 4px;color:var(--ink)}
+.stat.gold{--c:#C98A00} .stat.ok{--c:var(--ok)} .stat.sky{--c:var(--sky)}
 
 /* onboarding */
 .ob{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:520px;margin:0 auto;padding:32px 16px}
@@ -258,7 +259,8 @@ select,input[type=range]{font:inherit;accent-color:var(--accent)}
 .mini svg{width:20px;height:20px}
 .songrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:2px solid var(--surface-2);width:100%;text-align:left}
 @media (max-width:560px){ h1{font-size:30px} .kb{height:140px} .kw,.kb_{--kw:38px} .hero-note{font-size:58px;min-width:90px} .hero-note small{font-size:20px} .hero-f{font-size:16px} .fbtn{padding:0 14px} .btn{font-size:15px} }
-@media (max-width:420px){.hide-sm{display:none} #hear{width:56px;padding:0} .fbtn{padding:0 12px;font-size:14px}}
+.unit h2{overflow-wrap:anywhere}
+@media (max-width:420px){.unit h2{font-size:19px}.hide-sm{display:none} #hear{width:56px;padding:0} .fbtn{padding:0 12px;font-size:14px}}
 @media print{ .tabs,.no-print,.startbar{display:none!important} .app{padding:0} .daydetail{display:block!important} }
 </style>
 </head>
@@ -744,7 +746,7 @@ function libRows(){const q=songQuery.trim().toLowerCase();
   const list=CATALOG.filter(s=>(!songTier||s.d===songTier)&&(!q||(s.t+' '+s.f).toLowerCase().includes(q))).slice(0,songTier||q?400:60);
   if(!list.length)return '<p class="muted" style="padding:12px 0">No songs match.</p>';
   return list.map(s=>{const ready=S.unlocked>=TIER_DAY[s.d-1];const views=s.w>=1e6?(s.w/1e6).toFixed(1)+'M':s.w>=1e3?Math.round(s.w/1e3)+'K':s.w||'';
-    return `<div class="songrow"><span class="tier" style="background:${TIER_COLORS[s.d-1]}">${s.d}</span><span style="flex:1;min-width:0"><b style="font-weight:700">${esc(s.t)}</b><span class="tiny ell">${esc([s.f,s.y].filter(Boolean).join(' · '))}${views?` · ${views} views`:''}</span></span>${s.v?`<a class="mini" href="${s.v}" target="_blank" rel="noopener" aria-label="Video tutorial">${ICON.yt}</a>`:''}${s.n?`<a class="mini" href="${s.n}" target="_blank" rel="noopener" aria-label="Notation">${IC.book}</a>`:''}</div>`}).join('')+(!songTier&&!q&&CATALOG.length>60?`<p class="tiny" style="padding:12px 0">Showing the top 60. Pick a level or search to see all ${CATALOG.length}.</p>`:'')}
+    return `<div class="songrow"><span class="tier" style="background:${TIER_COLORS[s.d-1]}">${s.d}</span><span style="flex:1;min-width:0"><b class="ell" style="font-weight:700">${esc(s.t)}</b><span class="tiny ell">${esc([s.f,s.y].filter(Boolean).join(' · '))}${views?` · ${views} views`:''}</span></span>${s.v?`<a class="mini" href="${s.v}" target="_blank" rel="noopener" aria-label="Video tutorial">${ICON.yt}</a>`:'<span class="mini" style="visibility:hidden"></span>'}${s.n?`<a class="mini" href="${s.n}" target="_blank" rel="noopener" aria-label="Notation">${IC.book}</a>`:''}</div>`}).join('')+(!songTier&&!q&&CATALOG.length>60?`<p class="tiny" style="padding:12px 0">Showing the top 60. Pick a level or search to see all ${CATALOG.length}.</p>`:'')}
 
 function micHTML(){
   const n=S.settings.notation,th=S.settings.theme;
@@ -907,7 +909,7 @@ function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fing
       done:sum=>{stopCheck(false);delete SES.progress[SES.bi];kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));strip.querySelectorAll('.cur').forEach(e=>e.classList.remove('cur'));setHero(-1);recordScore(b,sum);showExResult(b,sum);saveSession()}},startI);
     wm.state.wrong=carry.wrong||0;wm.state.wrongAt=(carry.wrongAt||notes.map(()=>0)).slice();
     const h=f=>{updMeter(f);const ss=$('#sayS');if(ss&&f.midi!=null)ss.textContent='Heard: '+spoken(f.midi);wm.onFrame(f)};
-    checkState={h,wm};Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
+    checkState={h,wm};document.body.classList.add('listening');Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
     if(SYNTH_MIC)window.__autoplay&&window.__autoplay(notes.slice(startI),ex.bpm)};
   $('#selfOk').onclick=()=>{const sum={notes:notes.length,wrong:0,accuracy:S.settings.pass,self:true};recordScore(b,sum);showExResult(b,sum);saveSession()};
 }
@@ -916,7 +918,7 @@ function direction(heard,want){const d=want-heard;const W=spoken(want);
   if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. Play ${W} ${d>0?'higher':'lower'}.`;
   const n=Math.abs(d);return `${n===1?'One key':n+' keys'} to the ${d>0?'right':'left'}: ${W}`}
 function spoken(m){const n=S.settings.notation;if(n==='letters')return midiName(m);if(n==='sargam')return sargamOf(m);return `${letterOf(m)} (${sargamOf(m)})`}
-function stopCheck(){if(checkState){Ear.handlers.delete(checkState.h);checkState=null;const c=$('#check');if(c){c.textContent='Check me';c.classList.remove('live')}}}
+function stopCheck(){document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null;const c=$('#check');if(c){c.textContent='Check me';c.classList.remove('live')}}}
 function recordScore(b,sum){const k=bestKey(b);S.best[k]=Math.max(S.best[k]||0,sum.accuracy);if(b.ex.song&&(b.ex.part==='full'||SES.songId))S.best['song:'+b.ex.song]=Math.max(S.best['song:'+b.ex.song]||0,sum.accuracy);
   SES.notesPlayed+=sum.notes;SES.wrong+=sum.wrong||0;
   if(b.gate){const prev=SES.scores[SES.bi];if(!prev||sum.accuracy>prev.accuracy)SES.scores[SES.bi]=sum}save();logPractice()}
@@ -974,7 +976,7 @@ function finishSession(){stopCheck();stopMetro();clearInterval(SES.timerInt);
   let head,sub,actions;
   if(!day.n){head=passed?'Nice.':'Keep going.';sub=`${SONGS[SES.songId].t}. Practise songs any time.`;actions=`<button class="btn btn-primary btn-block" id="rDone">Done</button>`}
   else if(passed){head=day.n===90?'You did it.':`Day ${day.n} done.`;sub=day.n===90?'90 days. From finding middle C to a recital. Keep the recordings.':`Day ${day.n+1} is unlocked. Come back tomorrow, or start it now if you have time left.`;
-    actions=`<button class="btn btn-primary btn-block" id="rDone">Done for today</button>${day.n<90?`<button class="btn btn-ghost btn-block" id="rNext">Start Day ${day.n+1} now</button>`:''}`}
+    actions=`<button class="btn btn-accent btn-block" id="rDone">Done for today</button>${day.n<90?`<button class="btn btn-ghost btn-block" id="rNext">Start Day ${day.n+1} now</button>`:''}`}
   else if(missing.length){head='Test not taken.';sub=`Play the test block${gates.length>1?'s':''} with "Check me" to unlock the next day. ${missing.map(i=>day.blocks[i].title).join(', ')}.`;
     actions=`<button class="btn btn-accent btn-block" id="rRetry">Go to the test</button><button class="btn btn-ghost btn-block" id="rDone">Do it tomorrow</button>`}
   else{head='Almost.';sub=`You need ${S.settings.pass}%. Slow down and play it once more. Accuracy beats speed.`;
