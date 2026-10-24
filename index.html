@@ -169,7 +169,7 @@ h2{font-size:19px;font-weight:700}
 .hero-f:empty{display:none}
 .hero-say{font-size:16px;font-weight:600;color:var(--ink-2);margin-top:8px}
 .hero-say.bad{color:var(--bad-d)}
-.meter{width:10px;height:56px;border-radius:6px;background:var(--surface-2);position:relative;overflow:hidden;flex:none}
+.meter{width:8px;height:56px;border-radius:6px;background:transparent;position:relative;overflow:hidden;flex:none}
 .hero .meter{visibility:hidden} body.listening .hero .meter{visibility:visible}
 .meter i{position:absolute;left:0;right:0;bottom:0;background:var(--ok);height:0;transition:height .06s}
 .listen{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-s);background:var(--surface-2)}
@@ -181,7 +181,7 @@ h2{font-size:19px;font-weight:700}
 .stripwrap{position:relative;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 32px),transparent)}
 .strip{display:flex;gap:8px;overflow-x:auto;padding:8px 4px 12px;scroll-behavior:smooth;scrollbar-width:none}
 .strip::-webkit-scrollbar,.kbwrap::-webkit-scrollbar{display:none}
-.chip{flex:none;min-width:54px;padding:6px 6px 8px;border-radius:14px;background:var(--surface);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);text-align:center;transition:all .15s}
+.chip{flex:none;min-width:54px;padding:6px 6px 8px;border-radius:14px;background:var(--surface);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);text-align:center;transition:transform .15s}
 .chip .f{font-size:12px;color:var(--sky);font-weight:800;height:15px}
 .chip .l{font-weight:800;font-size:18px;line-height:1.2}
 .chip .s{font-size:12px;font-weight:600;color:var(--ink-2)}
@@ -199,14 +199,16 @@ h2{font-size:19px;font-weight:700}
 .ngrid.grid2 .nrow{gap:4px;flex-wrap:nowrap}
 .ngrid.grid2 .rlab{display:none}
 .ngrid.grid2 .nrow{position:relative;padding-top:26px}
-.ngrid.grid2 .nrow::before{content:attr(data-lab);position:absolute;top:6px;left:10px;font-weight:800;font-size:15px;color:var(--grape)}
+.ngrid.grid2 .nrow::before{content:attr(data-lab);position:absolute;top:6px;left:10px;font-weight:800;font-size:16px;color:#9C88FF}
 .ngrid.grid2 .chip{width:auto;flex:1 1 0;min-width:0}
 .rlab{flex:0 0 100%;font-weight:800;font-size:15px;color:var(--grape);padding:0 2px}
 .nrow{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:14px;background:var(--surface-2)}
-.ngrid .chip{width:44px;flex:0 0 auto;padding:4px 2px 6px;border-radius:10px;box-shadow:0 2px 0 var(--line)}
+.ngrid .chip{width:calc((100% - 42px)/8);min-width:32px;flex:0 0 auto;padding:4px 2px 6px;border-radius:10px;box-shadow:0 2px 0 var(--line)}
 .ngrid .chip .l{font-size:17px}
 .ngrid .chip .s{font-size:11px}
 .ngrid .chip .f{font-size:11px;height:13px}
+.chip.cur .l,.chip.cur .s,.chip.cur .f{color:#fff!important}
+.ngrid .chip .s{font-size:10px}
 .chip.demo{background:var(--sky-soft);border-color:var(--sky)}
 .sheet-bg{position:fixed;inset:0;background:rgba(10,12,20,.45);z-index:80;display:flex;align-items:flex-end;justify-content:center}
 .sheet-bg[hidden]{display:none}
@@ -221,6 +223,8 @@ h2{font-size:19px;font-weight:700}
 .kw{position:relative;width:var(--kw,46px);height:100%;background:var(--key-w);border:2px solid var(--edge);border-radius:0 0 12px 12px;margin-right:-2px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:8px;font-size:11px;font-weight:600;color:#6c7088;box-shadow:0 4px 0 var(--edge);transition:background .1s}
 .kw b{font-size:14px;color:#262A3F;font-weight:800}
 .kw.mc::after{content:"";position:absolute;bottom:46px;width:8px;height:8px;border-radius:50%;background:var(--sky)}
+.kb.fill{width:100%}
+.kb.fill .kw{flex:1 1 0;width:auto;min-width:0}
 .kb_{position:absolute;top:0;width:calc(var(--kw,46px)*.62);height:60%;background:var(--key-b);border-radius:0 0 8px 8px;z-index:2;box-shadow:0 3px 0 #000;transition:background .1s}
 .k-target{background:var(--accent)!important;color:#fff!important;border-color:var(--accent-d)!important}
 .k-target b{color:#fff!important}
@@ -280,7 +284,7 @@ select,input[type=range]{font:inherit;accent-color:var(--accent)}
 .mini{flex:none;width:40px;height:40px;border-radius:12px;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .mini svg{width:20px;height:20px}
 .songrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:2px solid var(--surface-2);width:100%;text-align:left}
-@media (max-width:560px){ h1{font-size:30px} .kb{height:140px} .kw,.kb_{--kw:38px} .hero-note{font-size:58px;min-width:90px} .hero-note small{font-size:20px} .hero-f{font-size:16px} .fbtn{padding:0 14px} .btn{font-size:15px} }
+@media (max-width:560px){ h1{font-size:30px} .kb{height:130px} .kw,.kb_{--kw:38px} .hero-note{font-size:58px;min-width:90px} .hero-note small{font-size:20px} .hero-f{font-size:16px} .fbtn{padding:0 14px} .btn{font-size:15px} }
 .unit h2{overflow-wrap:anywhere}
 @media (max-width:420px){.unit h2{font-size:19px}.hide-sm{display:none} .fbtn{padding:0 12px;font-size:14px}}
 @media print{ .tabs,.no-print,.startbar{display:none!important} .app{padding:0} .daydetail{display:block!important} }
@@ -708,8 +712,9 @@ function keyboardHTML(lo,hi){
   for(let m=lo;m<=hi;m++){if(isBlack(m)){blacks.push({m,wi})}else{whites.push(m);wi++}}
   const n=S.settings.notation;
   const w=whites.map(m=>{const lab=n==='sargam'?`<b>${sargamOf(m)}</b>`:n==='letters'?`<b>${letterOf(m)}</b>`:`<b>${letterOf(m)}</b><span>${sargamOf(m)}</span>`;return `<div class="kw${m===60?' mc':''}" data-m="${m}">${lab}</div>`}).join('');
-  const b=blacks.map(({m,wi})=>`<div class="kb_" data-m="${m}" style="left:calc(var(--kw,44px)*${wi} - var(--kw,44px)*.31 - ${wi>0?0:0}px)"></div>`).join('');
-  return `<div class="kbwrap"><div class="kb">${w}${b}</div></div>`}
+  const fill=whites.length<=15;const W=whites.length;
+  const b=blacks.map(({m,wi})=>`<div class="kb_" data-m="${m}" style="${fill?`left:calc(${wi/W*100}% - ${31/W}%);width:${62/W}%`:`left:calc(var(--kw,44px)*${wi} - var(--kw,44px)*.31)`}"></div>`).join('');
+  return `<div class="kbwrap"><div class="kb${fill?' fill':''}">${w}${b}</div></div>`}
 function keyEl(root,m){return root.querySelector(`[data-m="${m}"]`)}
 function flashKey(root,m,cls,ms=380){const k=keyEl(root,m);if(!k)return;k.classList.add(cls);setTimeout(()=>k.classList.remove(cls),ms)}
 
