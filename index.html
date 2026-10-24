@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FF7A45">
+<title>Piano Coach</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F2F3F8; --ink:#262A3F; --ink-2:#5D627A; --ink-3:#9AA0B5;
+  --line:#E4E6EF; --edge:#D6D9E5;
+  --accent:#FF7A45; --accent-d:#DE5A26; --accent-soft:#FFE9DE;
+  --ok:#1FBF86; --ok-d:#16A06F; --ok-soft:#DDF7EC;
+  --bad:#FF4D6D; --bad-d:#D93356; --bad-soft:#FFE1E7;
+  --sky:#3BA8FF; --sky-d:#1F86DB; --sky-soft:#E0F1FF;
+  --gold:#FFC23C; --gold-d:#E3A21A; --gold-soft:#FFF4D6;
+  --grape:#8B6CFF; --grape-d:#6B4DE0;
+  --key-w:#FFFFFF; --key-b:#262A3F;
+  --r:20px; --r-s:14px;
+  --display:"Rubik",system-ui,sans-serif; --text:"Rubik",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141725; --surface:#1C2033; --surface-2:#252A40; --ink:#F1F2F8; --ink-2:#B3B8CE; --ink-3:#7D839C;
+  --line:#2C3149; --edge:#0E1019; --accent-soft:#3A2418; --ok-soft:#10352A; --bad-soft:#3D1824; --sky-soft:#142B44; --gold-soft:#3A3014;
+  --key-w:#ECEEF6; --key-b:#0E1019;
+}}
+:root[data-theme="dark"]{
+  --bg:#141725; --surface:#1C2033; --surface-2:#252A40; --ink:#F1F2F8; --ink-2:#B3B8CE; --ink-3:#7D839C;
+  --line:#2C3149; --edge:#0E1019; --accent-soft:#3A2418; --ok-soft:#10352A; --bad-soft:#3D1824; --sky-soft:#142B44; --gold-soft:#3A3014;
+  --key-w:#ECEEF6; --key-b:#0E1019;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--text);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--sky)}
+.app{max-width:640px;margin:0 auto;padding:12px 16px 180px}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+h1,.display{font-family:var(--display);font-weight:800;letter-spacing:-.01em}
+h1{font-size:34px;line-height:1.1}
+h2{font-size:19px;font-weight:700}
+.muted{color:var(--ink-2)} .small{font-size:15px} .tiny{font-size:13px;color:var(--ink-2)}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:var(--r)}
+.pad{padding:18px}
+.stack>*+*{margin-top:12px}
+.row{display:flex;align-items:center;gap:12px}
+.spacer{flex:1}
+/* chunky 3D buttons */
+.btn{--c:var(--surface-2);--d:var(--edge);--t:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 22px;border-radius:16px;font-weight:700;font-size:16px;letter-spacing:.02em;background:var(--c);color:var(--t);box-shadow:0 4px 0 var(--d);transform:translateY(0);transition:transform .08s,box-shadow .08s,filter .15s;text-transform:uppercase}
+.btn:hover{filter:brightness(1.04)}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--d)}
+.btn-primary{--c:var(--sky);--d:var(--sky-d);--t:#fff}
+.btn-accent{--c:var(--accent);--d:var(--accent-d);--t:#fff}
+.btn-ok{--c:var(--ok);--d:var(--ok-d);--t:#fff}
+.btn-ghost{--c:var(--surface);--d:var(--line);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn-line{--c:var(--surface);--d:var(--line);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn-block{width:100%}
+.btn-sm{height:42px;padding:0 16px;font-size:14px;border-radius:12px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:700;background:var(--surface-2);color:var(--ink-2)}
+.pill.ok{background:var(--ok-soft);color:var(--ok-d)} .pill.accent{background:var(--accent-soft);color:var(--accent-d)} .pill.bad{background:var(--bad-soft);color:var(--bad-d)} .pill.sky{background:var(--sky-soft);color:var(--sky-d)}
+:root[data-theme="dark"] .pill.ok,:root[data-theme="dark"] .pill.accent{filter:brightness(1.6)}
+
+/* top stats */
+.statbar{display:flex;justify-content:space-between;align-items:center;padding:6px 0 14px}
+.stati{display:flex;align-items:center;gap:6px;font-weight:700;font-size:16px}
+.stati svg{width:24px;height:24px}
+.stati.fire{color:var(--accent)} .stati.xp{color:var(--gold-d)} .stati.day{color:var(--sky)}
+
+/* unit banner */
+.unit{border-radius:var(--r);padding:16px 18px;color:#fff;background:var(--grape);box-shadow:0 4px 0 var(--grape-d);display:flex;align-items:center;gap:12px}
+.unit .eyebrow{color:rgba(255,255,255,.8)}
+.unit h2{font-size:21px;font-weight:800;margin-top:2px}
+.unit p{font-size:14px;opacity:.9;margin-top:2px}
+.unit .ubtn{flex:none;width:48px;height:48px;border-radius:14px;border:2px solid rgba(255,255,255,.35);display:grid;place-items:center}
+.unit .ubtn svg{width:22px;height:22px}
+
+/* path */
+.path{position:relative;display:flex;flex-direction:column;align-items:center;gap:40px;padding:64px 0 24px}
+.node{position:relative;width:76px;height:70px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--surface-2);box-shadow:0 7px 0 var(--edge);transition:transform .1s}
+.node svg{width:32px;height:32px}
+.node:active{transform:translateY(5px);box-shadow:0 2px 0 var(--edge)}
+.node.done{background:var(--gold);box-shadow:0 7px 0 var(--gold-d)}
+.node.cur{background:var(--accent);box-shadow:0 7px 0 var(--accent-d);width:84px;height:78px}
+.node.cur::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:6px solid var(--accent-soft)}
+.node.locked{color:var(--ink-3)}
+.node .lbl{position:absolute;bottom:-26px;font-size:12px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.bubble{position:absolute;bottom:calc(100% + 18px);left:50%;transform:translateX(-50%);background:var(--surface);color:var(--accent);border:2px solid var(--line);padding:8px 14px;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.04em;white-space:nowrap;animation:bob 1.6s ease-in-out infinite}
+.bubble::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:var(--line)}
+@keyframes bob{50%{transform:translate(-50%,-4px)}}
+@media (prefers-reduced-motion:reduce){.bubble{animation:none}}
+
+/* week dots */
+.week{display:flex;gap:6px}
+.wd{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);font-weight:700}
+.wd b{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:transparent}
+.wd.done b{background:var(--accent);color:#fff}
+.wd.today b{box-shadow:0 0 0 2px var(--accent)}
+
+.blocks{list-style:none}
+.blocks li{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:2px solid var(--surface-2)}
+.blocks li:first-child{border-top:0}
+.bn{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:15px;font-weight:800;color:#fff;flex:none}
+.bt{flex:1;min-width:0}
+.bt b{display:block;font-weight:700;font-size:16px}
+.bt span{display:block;font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm{font-size:14px;font-weight:700;color:var(--ink-3)}
+.gate-tag{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom));z-index:20}
+.tabs-inner{max-width:440px;margin:0 auto;display:flex;justify-content:space-around}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--ink-3);padding:6px 14px;border-radius:14px;border:2px solid transparent}
+.tab svg{width:26px;height:26px}
+.tab.on{color:var(--sky);background:var(--sky-soft);border-color:color-mix(in srgb,var(--sky) 40%,transparent)}
+.startbar{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 16px 12px;z-index:19;pointer-events:none}
+.startbar .btn{pointer-events:auto;max-width:608px;margin:0 auto;display:flex;height:56px}
+
+/* plan */
+.wk{margin-top:24px}
+.wk .unit{margin-bottom:8px}
+.dayrow{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:var(--r-s);width:100%;text-align:left}
+.dayrow:hover{background:var(--surface-2)}
+.dnum{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:16px;flex:none;background:var(--surface-2);color:var(--ink-2)}
+.dayrow.done .dnum{background:var(--gold);color:#fff}
+.dayrow.cur .dnum{background:var(--accent);color:#fff}
+.dayrow.locked{color:var(--ink-3)}
+.dstat{font-size:13px;font-weight:700}
+.daydetail{padding:2px 12px 14px 70px;font-size:14px;color:var(--ink-2)}
+.daydetail li{margin:8px 0 8px 16px;line-height:1.55}
+
+/* session */
+.session{position:fixed;inset:0;background:var(--bg);z-index:50;overflow-y:auto}
+.s-top{position:sticky;top:0;background:var(--bg);z-index:5;padding:12px 16px}
+.s-top-inner{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.bar{flex:1;height:18px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--ok);position:relative;transition:width .4s ease}
+.bar i::after{content:"";position:absolute;left:10px;right:10px;top:4px;height:4px;border-radius:4px;background:rgba(255,255,255,.35)}
+.s-title{max-width:760px;margin:6px auto 0;display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-3)}
+.timer{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink-2);background:var(--surface-2);padding:4px 10px;border-radius:10px}
+.timer.over{color:var(--accent-d);background:var(--accent-soft)}
+.s-body{max-width:760px;margin:0 auto;padding:12px 16px 150px}
+.how{list-style:none;counter-reset:h}
+.how li{counter-increment:h;position:relative;padding-left:32px;margin:8px 0;color:var(--ink-2)}
+.how li::before{content:counter(h);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:8px;background:var(--sky-soft);color:var(--sky-d);font-size:12px;font-weight:800;display:grid;place-items:center}
+.howbox summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--sky);padding:4px 0;list-style:none}
+.howbox summary::before{content:"+ "} .howbox[open] summary::before{content:"− "}
+.s-foot{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--line);padding:12px 16px calc(14px + env(safe-area-inset-bottom));z-index:6}
+.s-foot-inner{max-width:760px;margin:0 auto;display:flex;gap:10px}
+.fbtn{height:56px;white-space:nowrap}
+.grow{flex:1}
+.btn-icon{width:56px;height:56px;padding:0;font-size:26px}
+#check.live{--c:var(--bad);--d:var(--bad-d);--t:#fff}
+.iconbtn{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:var(--ink-3)}
+.linkbtn{color:var(--sky);font-weight:700;font-size:14px}
+
+/* hero note */
+.hero{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:var(--r);background:var(--surface);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);transition:background .15s,border-color .15s}
+.hero.ok{background:var(--ok-soft);border-color:var(--ok);box-shadow:0 4px 0 var(--ok)}
+.hero.bad{background:var(--bad-soft);border-color:var(--bad);box-shadow:0 4px 0 var(--bad)}
+.hero-note{font-weight:800;font-size:72px;line-height:1;min-width:110px;display:flex;align-items:baseline;gap:10px}
+.hero-note small{font-size:26px;font-weight:600;color:var(--ink-2)}
+.hero-side{flex:1;min-width:0}
+.hero-f{display:inline-flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#fff;background:var(--sky);padding:6px 14px;border-radius:12px;box-shadow:0 3px 0 var(--sky-d)}
+.hero-f:empty{display:none}
+.hero-say{font-size:16px;font-weight:600;color:var(--ink-2);margin-top:8px}
+.hero-say.bad{color:var(--bad-d)}
+.meter{width:10px;height:56px;border-radius:6px;background:var(--surface-2);position:relative;overflow:hidden;flex:none}
+.meter i{position:absolute;left:0;right:0;bottom:0;background:var(--ok);height:0;transition:height .06s}
+.listen{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-s);background:var(--surface-2)}
+.heard{font-size:30px;font-weight:800;min-width:84px}
+.say{font-size:15px;font-weight:600}
+.say.bad{color:var(--bad-d)} .say.ok{color:var(--ok-d)}
+
+/* note strip */
+.stripwrap{position:relative;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 32px),transparent)}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:8px 4px 12px;scroll-behavior:smooth;scrollbar-width:none}
+.strip::-webkit-scrollbar,.kbwrap::-webkit-scrollbar{display:none}
+.chip{flex:none;min-width:54px;padding:6px 6px 8px;border-radius:14px;background:var(--surface);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);text-align:center;transition:all .15s}
+.chip .f{font-size:12px;color:var(--sky);font-weight:800;height:15px}
+.chip .l{font-weight:800;font-size:18px;line-height:1.2}
+.chip .s{font-size:12px;font-weight:600;color:var(--ink-2)}
+.chip.cur{background:var(--accent);border-color:var(--accent-d);box-shadow:0 3px 0 var(--accent-d);color:#fff;transform:translateY(-3px)}
+.chip.cur .s,.chip.cur .f{color:#fff}
+.chip.ok{background:var(--ok-soft);border-color:var(--ok);box-shadow:0 3px 0 var(--ok)} .chip.ok .l{color:var(--ok-d)} .chip.ok .s{color:var(--ok-d)}
+.chip.miss{border-color:var(--bad);box-shadow:0 3px 0 var(--bad)}
+.chip.wide{min-width:70px}
+.chip .octd{font-size:10px;vertical-align:sub;opacity:.6}
+.lmark{flex:none;width:3px;margin:8px 2px;border-radius:2px;background:var(--line)}
+
+/* keyboard */
+.kbwrap{overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.kb{position:relative;display:flex;height:170px;user-select:none;margin:0 auto;width:max-content;padding-bottom:4px}
+.kw{position:relative;width:var(--kw,46px);height:100%;background:var(--key-w);border:2px solid var(--edge);border-radius:0 0 12px 12px;margin-right:-2px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:8px;font-size:11px;font-weight:600;color:#6c7088;box-shadow:0 4px 0 var(--edge);transition:background .1s}
+.kw b{font-size:14px;color:#262A3F;font-weight:800}
+.kw.mc::after{content:"";position:absolute;bottom:46px;width:8px;height:8px;border-radius:50%;background:var(--sky)}
+.kb_{position:absolute;top:0;width:calc(var(--kw,46px)*.62);height:60%;background:var(--key-b);border-radius:0 0 8px 8px;z-index:2;box-shadow:0 3px 0 #000;transition:background .1s}
+.k-target{background:var(--accent)!important;color:#fff!important;border-color:var(--accent-d)!important}
+.k-target b{color:#fff!important}
+.k-ok{background:var(--ok)!important;color:#fff!important;border-color:var(--ok-d)!important}
+.k-ok b{color:#fff!important}
+.k-bad{background:var(--bad)!important;color:#fff!important;border-color:var(--bad-d)!important}
+.k-bad b{color:#fff!important}
+.k-hear{box-shadow:inset 0 -8px 0 var(--accent),0 4px 0 var(--edge)}
+
+/* metronome */
+.beats{display:flex;gap:8px;flex-wrap:wrap}
+.beat{width:38px;height:38px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:14px;font-weight:800;color:var(--ink-2);transition:all .06s}
+.beat.on{background:var(--sky);color:#fff;transform:scale(1.15)}
+.beat.acc.on{background:var(--accent);color:#fff}
+.bpm{font-size:40px;font-weight:800;min-width:72px;text-align:center}
+
+/* self check */
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:2px solid var(--surface-2);cursor:pointer;text-align:left;width:100%}
+.check:first-child{border-top:0}
+.box{width:28px;height:28px;border-radius:9px;border:2px solid var(--edge);flex:none;display:grid;place-items:center;box-shadow:0 2px 0 var(--edge)}
+.check.on .box{background:var(--ok);border-color:var(--ok-d);box-shadow:0 2px 0 var(--ok-d)}
+.check.on .box::after{content:"";width:7px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+/* result */
+.result{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-s);border:2px solid}
+.result .display{font-size:32px}
+.result.ok{background:var(--ok-soft);border-color:var(--ok)} .result.ok .display{color:var(--ok-d)}
+.result.bad{background:var(--bad-soft);border-color:var(--bad)} .result.bad .display{color:var(--bad-d)}
+.result .small{color:var(--ink-2)}
+.ring{width:170px;height:170px;margin:0 auto;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .v b{font-size:44px;font-weight:800;line-height:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{border-radius:16px;border:2px solid var(--c);overflow:hidden;text-align:center;background:var(--surface)}
+.stat span{display:block;background:var(--c);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
+.stat b{display:block;font-size:24px;font-weight:800;padding:10px 4px;color:var(--c)}
+.stat.gold{--c:var(--gold-d)} .stat.ok{--c:var(--ok)} .stat.sky{--c:var(--sky)}
+
+/* onboarding */
+.ob{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:520px;margin:0 auto;padding:32px 16px}
+.dots{display:flex;gap:6px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent);width:24px;border-radius:5px}
+
+select,input[type=range]{font:inherit;accent-color:var(--accent)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:14px;padding:4px}
+.seg button{height:36px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:700;color:var(--ink-2)}
+.seg button.on{background:var(--surface);color:var(--sky-d);box-shadow:0 2px 0 var(--line)}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-size:15px;font-weight:600;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.vlink{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-s);border:2px solid var(--line);text-decoration:none;color:var(--ink);font-size:15px;font-weight:600}
+.vlink svg{flex:none;color:#FF3B30}
+.warnbar{font-size:14px;color:var(--ink-2);background:var(--accent-soft);border-radius:var(--r-s);padding:10px 12px}
+.tier{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:10px;font-weight:800;font-size:14px;color:#fff;flex:none}
+.ell{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{flex:none;width:40px;height:40px;border-radius:12px;border:2px solid var(--line);box-shadow:0 3px 0 var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.mini svg{width:20px;height:20px}
+.songrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:2px solid var(--surface-2);width:100%;text-align:left}
+@media (max-width:560px){ h1{font-size:30px} .kb{height:140px} .kw,.kb_{--kw:38px} .hero-note{font-size:58px;min-width:90px} .hero-note small{font-size:20px} .hero-f{font-size:16px} .fbtn{padding:0 14px} .btn{font-size:15px} }
+@media (max-width:420px){.hide-sm{display:none} #hear{width:56px;padding:0} .fbtn{padding:0 12px;font-size:14px}}
+@media print{ .tabs,.no-print,.startbar{display:none!important} .app{padding:0} .daydetail{display:block!important} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* =========================================================
+   1. Notes, sargam, parsing
+   ========================================================= */
+const LETTERS=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS={'C#':'Db','D#':'Eb','F#':'F#','G#':'Ab','A#':'Bb'};
+const SARGAM=['Sa','re','Re','ga','Ga','Ma','MA','Pa','dha','Dha','ni','Ni'];
+const isBlack=m=>[1,3,6,8,10].includes(((m%12)+12)%12);
+const nameToMidi=s=>{const r=/^([A-G])(#|b)?(-?\d)$/.exec(s);let pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[r[1]];if(r[2]==='#')pc++;if(r[2]==='b')pc--;return 12*(+r[3]+1)+pc};
+const letterOf=m=>{const l=LETTERS[((m%12)+12)%12];return FLATS[l]||l};
+const octOf=m=>Math.floor(m/12)-1;
+const midiName=m=>letterOf(m)+octOf(m);
+function sargamOf(m){const s=SARGAM[((m%12)+12)%12];const o=octOf(m);if(o<4)return '.'.repeat(4-o)+s;if(o>4)return s+"'".repeat(o-4);return s}
+// "C4 D4 E4:2" -> [{m,d}]
+function parseNotes(str){return str.trim().split(/\s+/).map(t=>{const [n,d]=t.split(':');return {m:nameToMidi(n),d:d?+d:1}})}
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12)}
+
+/* Fingering: dynamic programming over fingers 1-5. RH by default; LH mirrors intervals. */
+const SPAN={'1,2':[1,5],'1,3':[2,7],'1,4':[3,8],'1,5':[4,9],'2,3':[1,3],'2,4':[2,5],'2,5':[3,7],'3,4':[1,2],'3,5':[2,4],'4,5':[1,2]};
+function stepCost(m1,f1,m2,f2,lh,long){let d=m2-m1;if(lh)d=-d;
+  if(d===0)return f1===f2?0:6;
+  if(f1===f2)return long&&Math.abs(d)<=4?2.5:12;
+  let c=0;const up=d>0,a=Math.abs(d);
+  if(up&&f2>f1||!up&&f2<f1){const [lo,hi]=SPAN[Math.min(f1,f2)+','+Math.max(f1,f2)];c+=a<lo?(lo-a)*2:a>hi?(a-hi)*2:0}
+  else{ // crossing
+    if(up&&f2===1&&f1>=2&&f1<=4&&a<=5)c+=5+(f1===4?2:0)+(a>2?1:0);
+    else if(!up&&f1===1&&f2>=2&&f2<=4&&a<=5)c+=5+(f2===4?2:0)+(a>2?1:0);
+    else c+=25}
+  if(isBlack(m2)&&f2===1)c+=4;if(isBlack(m2)&&f2===5)c+=1;if(f2===4||f2===5)c+=.1;
+  return c}
+function autoFinger(ms,lh,ds){ds=ds||[];const n=ms.length;if(!n)return[];const cost=[[0,0,0,0,0]],back=[[]];
+  cost[0]=[1,2,3,4,5].map(f=>(isBlack(ms[0])&&f===1?4:0)+(f===1||f===2?0:.5));
+  for(let i=1;i<n;i++){cost[i]=[];back[i]=[];for(let f2=1;f2<=5;f2++){let best=Infinity,bf=1;for(let f1=1;f1<=5;f1++){const c=cost[i-1][f1-1]+stepCost(ms[i-1],f1,ms[i],f2,lh,(ds[i-1]||1)>=2);if(c<best){best=c;bf=f1}}cost[i][f2-1]=best;back[i][f2-1]=bf}}
+  let f=1+cost[n-1].indexOf(Math.min(...cost[n-1]));const out=[f];for(let i=n-1;i>0;i--){f=back[i][f-1];out.unshift(f)}return out}
+function fingersFor(ex){if(ex.nof)return [];if(ex.f)return ex.f.split(' ').map(Number);const ns=parseNotes(ex.n);return autoFinger(ns.map(x=>x.m),ex.h==='LH',ns.map(x=>x.d))}
+
+/* =========================================================
+   2. Curriculum
+   ========================================================= */
+const PIX={
+  l1:{t:'PIX Series Lesson 1: Basics and alankars (Hindi)',u:'https://youtu.be/kRt2kC0sppo'},
+  l2:{t:'PIX Series Lesson 2: Western notes and right-hand exercises',u:'https://youtu.be/vGqDwsaJjeI'},
+  l3:{t:'PIX Series Lesson 3: Major scales with formulas',u:'https://youtu.be/owk3F0EbAY8'},
+  l4:{t:'PIX Series Lesson 4: Minor scales',u:'https://youtu.be/CKz0AipuEXc'},
+  l5:{t:'PIX Series Lesson 5: All chords',u:'https://youtu.be/G9cmrtEoR0U'},
+  l6:{t:'PIX Series Lesson 6: Playing with both hands',u:'https://youtu.be/44KvrEIP3_c'},
+  l7:{t:'PIX Series Lesson 7: Beginner arpeggio patterns',u:'https://youtu.be/GKKs-yIGwyI'},
+  rhythm:{t:'PIX Series: Rhythm (thaat), the most important lesson',u:'https://youtu.be/4Io6WRsD6nw'},
+  fingers:{t:'PIX Series: Top 4 exercises for smooth fingers',u:'https://youtu.be/PSs9mPyhHN0'},
+  fourchords:{t:'PIX Series: 4 chords for 100+ songs',u:'https://youtu.be/jG-NJzBIUTs'},
+  coord:{t:'PIX Series: 4 hand coordination exercises',u:'https://youtu.be/uAsF0_t5GQI'},
+  lh:{t:'PIX Series: Left hand basics',u:'https://youtu.be/rEEOH94gWWo'},
+  bolly:{t:'PIX Series: Bollywood songs playlist',u:'https://www.youtube.com/playlist?list=PL-C4jgLVkaocxWrF3Ksv1gckUJ70OEImr'},
+};
+
+const EX={
+  c5r:{t:'Five-finger C, right hand',h:'RH',n:'C4 D4 E4 F4 G4 F4 E4 D4 C4:2',f:'1 2 3 4 5 4 3 2 1',bpm:60,how:['Right thumb on middle C (Sa). One finger per key, C to G.','Curve your fingers like holding a small ball. Wrist level, not dropping.','Play slowly. Every note the same loudness.']},
+  c5l:{t:'Five-finger C, left hand',h:'LH',n:'C3 D3 E3 F3 G3 F3 E3 D3 C3:2',f:'5 4 3 2 1 2 3 4 5',bpm:60,how:['Left little finger (5) on the C below middle C.','Play up to G with your thumb, then back down.','Left hand is weaker. Go slower than feels necessary.']},
+  a1:{t:'Alankar 1: Sa Re Ga Ma Pa Dha Ni Sa',h:'RH',n:'C4 D4 E4 F4 G4 A4 B4 C5 C5 B4 A4 G4 F4 E4 D4 C4:2',f:'1 2 3 1 2 3 4 5 5 4 3 2 1 3 2 1',bpm:60,how:['Say the sargam out loud while you play it.','Thumb passes under after Ga (E) going up. Finger 3 crosses over going down.']},
+  a2:{t:'Alankar 2: pairs (SaRe ReGa GaMa)',h:'RH',n:'C4 D4 D4 E4 E4 F4 F4 G4 G4 A4 A4 B4 B4 C5:2',bpm:66,how:['Play in pairs: Sa Re, Re Ga, Ga Ma, up to Sa.','Lift and replay the repeated note. Do not hold it.']},
+  a3:{t:'Alankar 3: triplets (SaReGa ReGaMa)',h:'RH',n:'C4 D4 E4 D4 E4 F4 E4 F4 G4 F4 G4 A4 G4 A4 B4 A4 B4 C5:2',bpm:66,how:['Groups of three. Count 1 2 3, 1 2 3.','Keep the first note of each group a little stronger.']},
+  a4:{t:'Alankar 4: groups of four',h:'RH',n:'C4 D4 E4 F4 D4 E4 F4 G4 E4 F4 G4 A4 F4 G4 A4 B4 G4 A4 B4 C5:2',bpm:72,how:['Groups of four: SaReGaMa, ReGaMaPa ...','Count 1 2 3 4 evenly. This builds finger independence.']},
+  a5:{t:'Alankar 5: thirds (SaGa ReMa GaPa)',h:'RH',n:'C4 E4 D4 F4 E4 G4 F4 A4 G4 B4 A4 C5:2',bpm:72,how:['Skip one key each time: Sa Ga, Re Ma, Ga Pa.','Fingers 1 and 3 do most of the work. Move your hand smoothly.']},
+  ak:{t:'Komal alankar: Sa Re ga Ma Pa Dha ni Sa',h:'RH',n:'C4 D4 Eb4 F4 G4 A4 Bb4 C5 Bb4 A4 G4 F4 Eb4 D4 C4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['Your first black keys. Komal Ga is Eb, komal Ni is Bb.','Lowercase in sargam means komal (flat). This scale is Kafi thaat.']},
+  hanR:{t:'Finger drill (Hanon 1), right hand',h:'RH',n:'C4 E4 F4 G4 A4 G4 F4 E4 D4 F4 G4 A4 B4 A4 G4 F4 E4 G4 A4 B4 C5 B4 A4 G4 F4 A4 B4 C5 D5 C5 B4 A4 G4:2',f:'1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1',bpm:60,how:['Same finger pattern 1 2 3 4 5 4 3 2, starting one key higher each time.','Lift each finger from the knuckle. Do not push with the wrist.']},
+  hanL:{t:'Finger drill (Hanon 1), left hand',h:'LH',n:'C3 E3 F3 G3 A3 G3 F3 E3 D3 F3 G3 A3 B3 A3 G3 F3 E3 G3 A3 B3 C4 B3 A3 G3 F3 A3 B3 C4 D4 C4 B3 A3 G3:2',f:'5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5',bpm:60,how:['Left hand plays the same shape, starting with finger 5.','Slow is fine. Even is the goal.']},
+  thumb:{t:'Thumb-under drill',h:'RH',n:'C4 D4 E4 F4 E4 D4 C4 D4 E4 F4 G4 F4 E4 D4 C4:2',f:'1 2 3 1 3 2 1 2 3 1 2 1 3 2 1',bpm:60,how:['After E with finger 3, tuck your thumb under to play F.','Your hand should glide sideways, not jump.']},
+  cR:{t:'C major scale, right hand',h:'RH',n:'C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['Fingering: 1 2 3, thumb under, 1 2 3 4 5.','Coming down: 5 4 3 2 1, finger 3 over, 3 2 1.']},
+  cL:{t:'C major scale, left hand',h:'LH',n:'C3 D3 E3 F3 G3 A3 B3 C4 B3 A3 G3 F3 E3 D3 C3:2',f:'5 4 3 2 1 3 2 1 2 3 1 2 3 4 5',bpm:60,how:['Fingering up: 5 4 3 2 1, finger 3 over to A, 2 1.','Down: 1 2 3, thumb under to F, 1 2 3 4 5.']},
+  am5:{t:'A minor five-finger, right hand',h:'RH',n:'A3 B3 C4 D4 E4 D4 C4 B3 A3:2',f:'1 2 3 4 5 4 3 2 1',bpm:60,how:['Thumb on A below middle C. Same shape as five-finger C, new place.','Listen to how it sounds sadder. That is minor.']},
+  gR:{t:'G major scale, right hand',h:'RH',n:'G4 A4 B4 C5 D5 E5 F#5 G5 F#5 E5 D5 C5 B4 A4 G4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['Same fingering as C major. One black key: F#.','In sargam, G major starting from Pa is your first scale change.']},
+  fR:{t:'F major scale, right hand',h:'RH',n:'F4 G4 A4 Bb4 C5 D5 E5 F5 E5 D5 C5 Bb4 A4 G4 F4:2',f:'1 2 3 4 1 2 3 4 3 2 1 4 3 2 1',bpm:60,how:['Different fingering: 1 2 3 4 on F G A Bb, then thumb on C.','One black key: Bb.']},
+  amN:{t:'A minor scale (natural), right hand',h:'RH',n:'A3 B3 C4 D4 E4 F4 G4 A4 G4 F4 E4 D4 C4 B3 A3:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['All white keys, from A to A.','Fingering is the same as C major.']},
+  amH:{t:'A minor scale (harmonic), right hand',h:'RH',n:'A3 B3 C4 D4 E4 F4 G#4 A4 G#4 F4 E4 D4 C4 B3 A3:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['Same as natural minor, but G becomes G#.','That jump from F to G# is the sound of a lot of filmi melodies.']},
+  dm:{t:'D minor scale, right hand',h:'RH',n:'D4 E4 F4 G4 A4 Bb4 C5 D5 C5 Bb4 A4 G4 F4 E4 D4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['One black key: Bb.','Fingering like C major.']},
+  em:{t:'E minor scale, right hand',h:'RH',n:'E4 F#4 G4 A4 B4 C5 D5 E5 D5 C5 B4 A4 G4 F#4 E4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['One black key: F#.','Fingering like C major.']},
+  brk:{t:'Broken chords: C, F, G',h:'RH',n:'C4 E4 G4 E4 C4 F4 A4 C5 A4 F4 G4 B4 D5 B4 G4:2',f:'1 3 5 3 1 1 3 5 3 1 1 3 5 3 1',bpm:66,how:['Play each chord one note at a time: root, middle, top, middle, root.','These three chords (C, F, G) play hundreds of songs.']},
+  brk2:{t:'Broken chords: Dm, Em, Am',h:'RH',n:'D4 F4 A4 F4 D4 E4 G4 B4 G4 E4 A4 C5 E5 C5 A4:2',f:'1 3 5 3 1 1 3 5 3 1 1 3 5 3 1',bpm:66,how:['The three minor chords in C major.','Same shape: fingers 1 3 5.']},
+  arp:{t:'Left-hand arpeggio 1-5-10 (C Am F G)',h:'LH',n:'C3 G3 E4 G3 A2 E3 C4 E3 F2 C3 A3 C3 G2 D3 B3 D3:2',f:'5 2 1 2 5 2 1 2 5 2 1 2 5 2 1 2',bpm:60,how:['Root, fifth, then the third an octave up: the classic ballad left hand.','Let it ring with the sustain pedal if you have one.']},
+};
+
+const SONGS={
+  twinkle:{t:'Twinkle Twinkle',film:false,bpm:80,lines:['C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2','G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2','C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2']},
+  ode:{t:'Ode to Joy',film:false,bpm:80,lines:['E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:0.5 D4:2','E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:0.5 C4:2','D4 D4 E4 C4 D4 E4:0.5 F4:0.5 E4 C4 D4 E4:0.5 F4:0.5 E4 D4 C4 D4 G3:2','E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:0.5 C4:2']},
+  hbd:{t:'Happy Birthday',film:false,bpm:90,lines:['G4:0.75 G4:0.25 A4 G4 C5 B4:2','G4:0.75 G4:0.25 A4 G4 D5 C5:2','G4:0.75 G4:0.25 G5 E5 C5 B4 A4:2','F5:0.75 F5:0.25 E5 C5 D5 C5:3']},
+  jgm:{t:'Jana Gana Mana',film:false,bpm:72,lines:['C4 D4 E4 E4 E4 E4 E4 E4 E4 E4 E4 D4 E4 F4:2','E4 E4 E4 D4 D4 D4 B3 D4 C4:2','C4 G4 G4 G4 G4 G4 G4 G4 G4 G4 F#4 A4 G4:2','F4 F4 F4 E4 E4 E4 D4 F4 E4:2','E4 E4 E4 E4 E4 D4 G4 G4 G4 F4 F4:2','E4 E4 E4 D4 D4 D4 B3 D4 C4:2','C4 D4 E4 E4 E4 E4 D4 E4 F4:2','E4 F4 G4 G4 G4 F4 E4 D4 F4 E4:2','E4 E4 D4 D4 D4 B3 D4 C4:2','G4 G4 G4 G4 G4 G4 G4 G4 G4 G4 F#4 A4 G4:2','F4 F4 F4 F4 F4 E4 D4 F4 E4:2','B4 B4 C5:2 B4 A4 B4:2 A4 G4 A4:2','C4 C4 D4 D4 E4 E4 D4 E4 F4:4']},
+  kalho:{t:'Kal Ho Naa Ho (opening)',film:true,bpm:70,lines:['C4 B3 C4 B3 C4 B3 C4 E4 D4 C4:2','B3 A3 B3 A3 B3:3']},
+  pehla:{t:'Pehla Nasha (title line)',film:true,bpm:72,lines:['E4 E4 G4 G4:0.5 A4:0.5 G4 F4 E4 D4 G4 G4:2','E4 E4 G4 G4:0.5 A4:0.5 G4 F4 E4 D4 E4 D4:2']},
+  tumhiho:{t:'Tum Hi Ho (verse)',film:true,bpm:66,lines:['A3 C4 E4 E4 F4 C4 D4 B3:2','E4 A4 G4 G4 F4 F4 E4 D4 C4 D4 F4 E4 E4 E4:2','D4 D4 C4 D4 D4 C4 B3 A3 G3 A3 G3 A3:2'],lineNames:['Piano prelude riff','Verse, line 1','Verse, line 2']},
+  sare:{t:'Saare Jahan Se Achha',film:false,bpm:70,lines:['Eb4 D4 C4 D4 B3 C4 C4:2','G3 A3 C4 D4 Eb4 F4 Eb4 Eb4 D4 D4 Eb4 D4 C4:2']},
+  lagja:{t:'Lag Ja Gale (no ornaments)',film:true,bpm:60,lines:['G3 G3 E4:2 D4 E4 E4 D4 D4 E4 D4 E4 E4:2','E4 D4 E4 D4 E4 D4 E4 C4:2','G3 A3 A3:2 A3 A3 B3 D4 B3 A3 G3 A3 G3:2']},
+  zara:{t:'Zara Zara (first line)',film:true,bpm:76,lines:['E4 F4 E4 F4 F4 E4 F4 G4 E4 F4:2','F4 E4 F4 G4 E4 F4:2 E4 E4 A4 G4 A4:2']},
+  raghu:{t:'Raghupati Raghav',film:false,bpm:72,lines:['C4 C4 C4 C4 C4 C4 B3 A3 B3 D4 C4 D4 F4 E4 F4:2','D4 Eb4 D4 C4 B3 A3 B3 E4 D4 D4 C4:2']},
+  dil:{t:'Dil Diyan Gallan (opening)',film:true,bpm:66,lines:['G3 A3 A3 B3 B3 B3 A3 A3 C4 C4 C4 C4 B3 A3 G3 A3:2']},
+};
+// flatten a song (subset of lines) into an exercise
+function songEx(id,from=0,to){const s=SONGS[id];to=to==null?s.lines.length-1:to;const ls=s.lines.slice(from,to+1);const n=ls.join(' ');const lineStarts=[];let c=0;ls.forEach(l=>{lineStarts.push(c);c+=l.trim().split(/\s+/).length});
+  const part=(from===0&&to===s.lines.length-1)?'full':(from===to?`line ${from+1}`:`lines ${from+1} to ${to+1}`);
+  return {t:s.t,part,h:'RH',n,bpm:s.bpm,song:id,film:s.film,lineStarts}}
+
+/* Week plan. songLines: [from,to] per day 1-6 is derived. */
+/* ---- PIX-method 90-day plan (refs/pix-method.md section 3d) ---- */
+const VID={'7d':'YqpoC-UW67Q',L1:'kRt2kC0sppo',L2:'vGqDwsaJjeI',L3:'owk3F0EbAY8',L4:'CKz0AipuEXc',L5:'G9cmrtEoR0U',L6:'44KvrEIP3_c',L7:'GKKs-yIGwyI',L8:'f2KTNqaWP3Q','5M':'YaMdDn_GqI8',FE:'PSs9mPyhHN0',Rh:'4Io6WRsD6nw','4C':'jG-NJzBIUTs',HC:'uAsF0_t5GQI',LH:'rEEOH94gWWo',CF:'XwPfM2sG4MQ',Ear:'-yoqJ9YsAcc',TD:'KPtD12B3hhA',THH:'DjjIo8uPhZI',Tip:'hTuRrrpUv-4'};
+const VNAME={'7d':'7-day beginner course',L1:'Lesson 1: basics and alankars',L2:'Lesson 2: notes and right-hand exercises',L3:'Lesson 3: major scales',L4:'Lesson 4: minor scales',L5:'Lesson 5: chords',L6:'Lesson 6: both hands',L7:'Lesson 7: beginner arpeggios',L8:'Lesson 8: arpeggio patterns','5M':'5 common finger mistakes',FE:'4 finger exercises',Rh:'Rhythm (thaat)','4C':'4 chords, 100 songs',HC:'Hand coordination',LH:'Left hand lessons',CF:'Find chords of any song',Ear:'Find notes by ear',TD:'Tujhe Dekha To tutorial',THH:'Tum Hi Ho tutorial',Tip:'The ultimate tip'};
+function vlink(code){if(!code)return null;const [k,t]=code.split(':');return {t:'PIX Series · '+VNAME[k]+(t?` · from ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`:''),u:`https://youtu.be/${VID[k]}${t?'?t='+t:''}`}}
+const HAND_RULES=['Play near the front edge of the keys, not deep in by the fallboard.','Keep resting fingers low and close to the keys.','Curve your fingers like a paw. Press with the fingertip, not the flat pad.','Cross only over the thumb, and only after the thumb has played.','Fingers 4 and 5 are weak for everyone. Give them extra attention today.','Wrist level with the keys. Shoulders loose. Mild tiredness is fine; sharp pain means stop.'];
+const POSTURE=['Sit so your forearm is level with the keys. Not lower, not higher.','Sit far enough back that your elbows are slightly in front of your body.','Feet flat. Back straight but relaxed.','No note-name stickers on the keys. You will learn faster without them.'];
+// random note caller (deterministic per seed)
+function callerNotes(seed,count,black,lo=60,hi=71){let x=seed*9301+49297;const r=()=>(x=(x*9301+49297)%233280)/233280;const out=[];while(out.length<count){const m=lo+Math.floor(r()*(hi-lo+1));if(!black&&isBlack(m))continue;if(out.length&&out[out.length-1]===m)continue;out.push(m)}return out.map(m=>midiName(m)+':2').join(' ')}
+Object.assign(EX,{
+  f53:{t:'"5 forward, 3 back"',h:'RH',n:'C4 D4 E4 F4 G4 F4 E4 D4 D4 E4 F4 G4 A4 G4 F4 E4 E4 F4 G4 A4 B4 A4 G4 F4 F4 G4 A4 B4 C5 B4 A4 G4 C4:2',f:'1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1',bpm:60,how:['Fingers 1 2 3 4 5 4 3 2. Then start one key higher and repeat.','Use exactly these fingers, even when 4 and 5 feel stuck. That is the point.']},
+  f35:{t:'"5 back, 3 forward"',h:'RH',n:'G4 F4 E4 D4 C4 D4 E4 F4 A4 G4 F4 E4 D4 E4 F4 G4 B4 A4 G4 F4 E4 F4 G4 A4 C5 B4 A4 G4 F4 G4 A4 B4 C5:2',f:'5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5 4 3 2 1 2 3 4 5',bpm:60,how:['The reverse: start with finger 5 and walk down to the thumb, then back up to 4.','Move the whole hand up one key for each round.']},
+  shift5:{t:'Shifting five-note groups',h:'RH',n:'C4 D4 E4 F4 G4 D4 E4 F4 G4 A4 E4 F4 G4 A4 B4 F4 G4 A4 B4 C5 G4 A4 B4 C5 D5:2',f:'1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5 1 2 3 4 5',bpm:66,how:['Play five keys with five fingers, then lift and move the hand one key up.','Lift cleanly. No sliding.']},
+  fe1:{t:'Finger exercise 1 (5-1-3-4-5)',h:'RH',n:'G4 C4 E4 F4 G4 G4 G4 G4 B4 E4 G4 A4 B4 B4 B4 B4 D5 G4 B4 C5 D5 D5 D5 D5',f:'5 1 3 4 5 5 5 5 5 1 3 4 5 5 5 5 5 1 3 4 5 5 5 5',bpm:70,how:['Hand over C to G. Little finger on G first, then thumb on C.','Repeat the top note to fill 8 beats. Then shift the shape to E, then to G.']},
+  fe2:{t:'Finger exercise 2 (5-3-2-1-4-3-4-5)',h:'RH',n:'G4 E4 D4 C4 F4 E4 F4 G4 A4 F4 E4 D4 G4 F4 G4 A4 B4 G4 F4 E4 A4 G4 A4 B4',f:'5 3 2 1 4 3 4 5 5 3 2 1 4 3 4 5 5 3 2 1 4 3 4 5',bpm:70,how:['Fingers 5 3 2 1 4 3 4 5. Then the same shape one key higher.','Keep finger 4 curved when it comes back in.']},
+  fe3:{t:'Finger exercise 3 (1-5-3-4-5-3-2-1)',h:'RH',n:'C4 G4 E4 F4 G4 E4 D4 C4 E4 B4 G4 A4 B4 G4 F4 E4 G4 D5 B4 C5 D5 B4 A4 G4',f:'1 5 3 4 5 3 2 1 1 5 3 4 5 3 2 1 1 5 3 4 5 3 2 1',bpm:70,how:['Thumb, then jump to finger 5. The jump teaches distance by feel.','Then start from E, then from G.']},
+  fe4:{t:'Two-finger scale (thumb under)',h:'RH',n:'C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4:2',f:'1 2 1 2 1 2 1 2 1 2 1 2 1 2 1',bpm:60,how:['Only fingers 1 and 2. Thumb passes under going up, finger 2 crosses over coming down.','Next week, try pairs 1-3, then 1-4.']},
+  f45:{t:'Fingers 4 and 5 drill',h:'RH',n:'C4 G4 F4 G4 D4 G4 F4 G4 E4 G4 F4 G4 F4 G4 F4 G4 E4 G4 F4 G4 D4 G4 F4 G4 C4:2',f:'1 5 4 5 2 5 4 5 3 5 4 5 4 5 4 5 3 5 4 5 2 5 4 5 1',bpm:66,how:['Fingers 4 and 5 stay on F and G and alternate. The other fingers walk.','Fingers 4 and 5 may ache a little. Sharp pain means stop.']},
+  lh1:{t:'Left hand: first 4 notes of each scale',h:'LH',n:'C3 D3 E3 F3 D3 E3 F#3 G3 E3 F#3 G#3 A3 F3 G3 A3 Bb3 G3 A3 B3 C4 C3:2',f:'5 4 3 2 5 4 3 2 5 4 3 2 5 4 3 2 5 4 3 2 5',bpm:60,how:['Left hand, fingers 5 4 3 2, on the first 4 notes of C, D, E, F and G major.','This trains the weak left fingers. Play left-hand parts with the left hand even if you are right-handed.']},
+  lh2:{t:'Left hand: "3 forward, 1 back"',h:'LH',n:'C3 D3 E3 D3 D3 E3 F3 E3 E3 F3 G3 F3 F3 G3 A3 G3 G3 A3 B3 A3 C3:2',f:'5 4 3 4 5 4 3 4 5 4 3 4 5 4 3 4 5 4 3 4 5',bpm:60,how:['Fingers 5 4 3 4, then start one key higher.','Two notes per click once it feels easy.']},
+  dR:{t:'D major scale, right hand',h:'RH',n:'D4 E4 F#4 G4 A4 B4 C#5 D5 C#5 B4 A4 G4 F#4 E4 D4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['Formula R T T S T T T S from D gives two black keys: F# and C#.','Write it out first, then play.']},
+  aR:{t:'A major scale, right hand',h:'RH',n:'A3 B3 C#4 D4 E4 F#4 G#4 A4 G#4 F#4 E4 D4 C#4 B3 A3:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['Three black keys: C#, F#, G#.','Same fingering as C major.']},
+  eR:{t:'E major scale, right hand',h:'RH',n:'E4 F#4 G#4 A4 B4 C#5 D#5 E5 D#5 C#5 B4 A4 G#4 F#4 E4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['Four black keys. Thumb stays on the white keys E, A and B.']},
+  scShift:{t:'Scale shifting: C then G',h:'RH',n:'C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4 C4 G4 A4 B4 C5 D5 E5 F#5 G5 F#5 E5 D5 C5 B4 A4 G4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1 1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['Finish C major and start G major on the very next click. No pause.']},
+  emN:{t:'E minor scale, right hand',h:'RH',n:'E4 F#4 G4 A4 B4 C5 D5 E5 D5 C5 B4 A4 G4 F#4 E4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:66,how:['Minor formula R T S T T S T T from E. One black key: F#.']},
+  cmN:{t:'C minor scale, right hand',h:'RH',n:'C4 D4 Eb4 F4 G4 Ab4 Bb4 C5 Bb4 Ab4 G4 F4 Eb4 D4 C4:2',f:'1 2 3 1 2 3 4 5 4 3 2 1 3 2 1',bpm:60,how:['Three black keys: Eb, Ab, Bb. In sargam: komal ga, dha, ni.']},
+  fmN:{t:'F minor scale, right hand',h:'RH',n:'F4 G4 Ab4 Bb4 C5 Db5 Eb5 F5 Eb5 Db5 C5 Bb4 Ab4 G4 F4:2',f:'1 2 3 4 1 2 3 4 3 2 1 4 3 2 1',bpm:60,how:['Tum Hi Ho is in F minor in the original. Four black keys.','Fingering like F major: 1 2 3 4, then thumb on C.']},
+  triadsW:{t:'Chords C, F, G, one note at a time',h:'RH',n:'C4 E4 G4 F4 A4 C5 G4 B4 D5 C4:2',f:'1 3 5 1 3 5 1 3 5 1',bpm:60,how:['Each chord is notes 1, 3, 5 of its scale. Play them one by one, then together.','The mic checks the single notes. Then press all three together and listen.']},
+  triadsM:{t:'Minor chords Am, Dm, Em, one note at a time',h:'RH',n:'A3 C4 E4 D4 F4 A4 E4 G4 B4 A3:2',f:'1 3 5 1 3 5 1 3 5 1',bpm:60,how:['Minor chord = keys 1, 4, 8 counting black keys. Major = 1, 5, 8.']},
+  four:{t:'Four chords: Am G F E (roots)',h:'LH',n:'A2:4 G2:4 F2:4 E2:4 A2:4',f:'5 5 5 5 5',bpm:70,how:['Left hand plays only the root of each chord, held for 4 beats.','Then play it as an octave: little finger and thumb, 8 keys apart.']},
+  walk:{t:'Chord walk: C Dm Em F G Am',h:'LH',n:'C3 E3 G3 D3 F3 A3 E3 G3 B3 F3 A3 C4 G3 B3 D4 A3 C4 E4 C3:2',f:'5 3 1 5 3 1 5 3 1 5 3 1 5 3 1 5 3 1 5',bpm:60,how:['Left hand 5-3-1, broken. Move up one white key each time.','These are the six chords of C major that songs use.']},
+  brokenLH:{t:'Broken chords 5-3-1: C F G Am',h:'LH',n:'C3 E3 G3 E3 F3 A3 C4 A3 G3 B3 D4 B3 A3 C4 E4 C4 C3:2',f:'5 3 1 3 5 3 1 3 5 3 1 3 5 3 1 3 5',bpm:60,how:['Left hand plays each chord one note at a time: 5, 3, 1, 3.']},
+  ext:{t:'Extended pattern 1-5-8-10',h:'LH',n:'C3 G3 C4 E4 F2 C3 F3 A3 G2 D3 G3 B3 A2 E3 A3 C4 C3:2',f:'5 2 1 1 5 2 1 1 5 2 1 1 5 2 1 1 5',bpm:56,how:['Root, fifth, octave, then the third one octave up. The thumb moves for the last note.','This is the classic Bollywood ballad left hand.']},
+  waltz:{t:'3/4 pattern (for Lag Ja Gale)',h:'LH',n:'C3 G3 E4 F2 C3 A3 G2 D3 B3 C3 G3 E4 C3:3',f:'5 2 1 5 2 1 5 2 1 5 2 1 5',bpm:60,how:['Count 1 2 3. Bass on 1, then two notes above.','3/4 songs need this pattern. 4/4 songs do not.']},
+});
+const W13=[
+  ['Setup and first exercises','Posture, every key by name, and the first PIX finger exercises.'],
+  ['First song and alankars','Happy Birthday, the sargam scale and alankars 1 to 4.'],
+  ['Rhythm and moving hands','Note values, eighth notes, and shifting the hand cleanly.'],
+  ['Strong fingers','Finger exercises 1 and 2, the crossing rule, and tone vs semitone.'],
+  ['Major scales','The formula R T T S T T T S. C, G, D, F, A and E major.'],
+  ['Minor scales','The minor formula, fingers 4 and 5, and the scale caller.'],
+  ['Chords','Notes 1-3-5. Major, minor, and both hands.'],
+  ['Four chords, 100 songs','Am G F E, left-hand root octaves, Pehla Nasha with chords.'],
+  ['Both hands together','Right-hand scale over a left-hand chord. Chord shifting.'],
+  ['Chords over lyrics','Reading chord sheets, the I IV V rule, and Tum Hi Ho.'],
+  ['Broken chords','Left-hand arpeggios, chord walk, contrary motion.'],
+  ['Arpeggio patterns','The 1-5-8-10 shape, 4/4 and 3/4 patterns, Lag Ja Gale.'],
+  ['Ear and recital','Find notes by ear, polish, and play three songs end to end.'],
+];
+// t, warm, tech, new (ex id | [self items]), song 'id[:from-to]', gate (k|x|s), video, tip
+const P=[
+ ['Setup and posture','c5r',null,['Set your seat height: forearm level with the keys.','Find the groups of 2 and 3 black keys across the whole keyboard.','Find every C (left of the two black keys). Count how many your keyboard has.'],'ode:0-0','s','L1:62','posture'],
+ ['Note names: C to B and Sa to Ni','c5r','call1',['Say each white key out loud from C to C: C D E F G A B, then Sa Re Ga Ma Pa Dha Ni.'],'ode:0-0','k','7d:59'],
+ ['Sharps, flats and finger numbers','c5r','call2',['Each black key has two names: C# = Db. Name all five black keys both ways.','Finger numbers: thumb 1, index 2, middle 3, ring 4, little 5.'],'ode:0-1','k','7d:431'],
+ ['Hand shape','c5r','c5l',['Watch the hand-shape rules 1 to 3 in the video.','Play five fingers on C to G and check: fingertips, curved, near the front edge.'],'ode:0-1','k','5M:47','hand'],
+ ['"5 forward, 3 back"','c5r','f53',null,'ode:0-2','k','7d:768'],
+ ['The metronome','c5r','f53',['Start the metronome at 60 in the Rhythm block below and press C on every click for one minute.'],'ode:0-3','k','7d:1109'],
+ ['Review + "5 back, 3 forward"','c5l','f35',null,'ode','k','7d:919'],
+ ['First song: Happy Birthday','f53','f35',null,'hbd:0-1','s','7d:1591','posture'],
+ ['The sargam scale','f53','a1',null,'hbd:0-2','k','L1:569'],
+ ['Alankars 1 and 2','a1','a2',null,'hbd','k','L1:807'],
+ ['Alankar 3','a2','a3',null,'hbd','k','L1:926'],
+ ['Happy Birthday in time','a3','f53','rhythm:70','hbd','s','7d:1998'],
+ ['Alankar 4, komal and tivra','a3','a4','ak','hbd','k','L1:1018'],
+ ['Week 2 check','a1','f35','a4','hbd','s','Tip:71'],
+ ['Five-finger presses','c5r','c5l','f53','jgm:0-1','k','L2:719','posture'],
+ ['Rhythm: whole, half, quarter','a1','f53','rhythm:60','jgm:0-2','s','Rh:187'],
+ ['Jana Gana Mana begins','a2','f35',null,'jgm:0-3','s','2:L2:584'],
+ ['Shifting five-note groups','a1','shift5',null,'jgm:0-5','k','L2:1014'],
+ ['Rhythm: eighth notes','a3','shift5','rhythm:60e','jgm:0-5','s','Rh:335'],
+ ['Hold the long notes','a2','f53',null,'jgm:6-9','s','TD:283'],
+ ['Hand repositioning, faster','a4','shift5','f35','jgm:6-12','k','L2:1161'],
+ ['Finger exercise 1','c5r','fe1',null,'jgm','k','FE:156','posture'],
+ ['Crossing only over the thumb','a1','fe1',['Watch rules 4 and 5 in the video. Play the C scale slowly and check every crossing goes over the thumb.'],'jgm','s','5M:362','hand'],
+ ['Kal Ho Naa Ho','a2','fe1',null,'kalho','s','4C:41'],
+ ['Finger exercise 2','a3','fe2',null,'kalho','k','FE:398'],
+ ['Tone and semitone','a1','fe2',['Semitone = the very next key, black or white. Tone = two semitones.','From 10 random keys, find one tone up and one semitone up.'],'kalho','s','L3:192'],
+ ['The major formula: C and G','a4','cR','gR','kalho','x','L3:339'],
+ ['Week 4 check','a1','fe2','cR','jgm','s',null],
+ ['D and F major','a2','dR','fR','kalho','k','7d:2393','posture'],
+ ['A and E major','a3','aR','eR','hbd','k','L3:521'],
+ ['Finger exercise 3','a1','fe3',null,'jgm','k','FE:571'],
+ ['Black-key majors on paper','a4','fe3',['Write B, F# and Db major using R T T S T T T S. Check against the PIX PDF.','Play each one slowly, any fingering, just to hear it.'],'kalho','s','L3:521'],
+ ['Eb, Ab and Bb major on paper','a2','dR',['Write Eb, Ab and Bb major. These are the black-key scales many Hindi songs use.'],'hbd','s',null],
+ ['Scale shifting','a1','scShift',null,'jgm','k','L3:634'],
+ ['Two-finger scale','a3','fe4',null,'kalho','k','FE:676'],
+ ['The minor formula','a1','amN','emN','pehla:0-0','k','L4:124','posture'],
+ ['Fingers 4 and 5','a2','f45',null,'pehla:0-0','k','7d:3038','hand'],
+ ['C minor and the komal notes','a4','cmN','dm','pehla','k','7d:2699'],
+ ['4th and 5th finger speed','a3','f45','fe2','pehla','k','7d:3152'],
+ ['All 12 minors on paper','a1','amH',['Write the remaining minors: F, F#, C#, G#, Bb, Eb minor (R T S T T S T T).'],'pehla','s','L4:306'],
+ ['The scale caller','a5','scaleCall',null,'pehla','k','L4:358'],
+ ['Week 6 check: Pehla Nasha','a1','f45','amN','pehla','s','4C:216'],
+ ['What a chord is','a5','triadsW',['Play C, F and G chords with the right hand (1-3-5) and the left hand (5-3-1).'],'pehla','k','L5:142','posture'],
+ ['Both hands on chords','a1','triadsW',['Play every white-key major chord with both hands: C, D, E, F, G, A.','Left hand 5-3-1, right hand 1-3-5.'],'kalho','s','L5:227'],
+ ['Minor chords','a2','triadsM',null,'pehla','k','L5:387'],
+ ['Left hand gets stronger','a3','lh1',null,'jgm','k','LH:91'],
+ ['Build any chord by counting','a4','triadsM',['Major chord = keys 1, 5, 8. Minor = 1, 4, 8, counting black keys too.','Build Eb, Ab, Bb major and C#, F# minor this way.'],'pehla','s','L5:477'],
+ ['Left hand "3 forward, 1 back"','a5','lh2',null,'kalho','k','LH:306'],
+ ['The chord caller','a1','chordCall',null,'pehla','k','L5:650'],
+ ['Four chords: Am G F E','a2','four',['Change chord every 4 beats with the metronome at 70: Am, G, F, Em.'],'pehla','k','4C:41','hand'],
+ ['Root octaves under the melody','a3','four',['Pehla Nasha: left hand plays C, A, F, G octaves (one per half line) under the melody.'],'pehla','s','4C:377'],
+ ['E or E minor?','a4','lh1',['If the melody uses G#, play E major. If it stays on white keys, play E minor.','Try both under the Am-G-F-E loop and hear the difference.'],'raghu','s','4C:239'],
+ ['Raghupati Raghav with octaves','a5','four',null,'raghu','s','4C:273'],
+ ['Coordination 1: held note','a1','cR',['Left hand holds C3. Right hand plays the C scale over it. Then hold G3 and play G major.'],'pehla','k','HC:142'],
+ ['Coordination 2: two against one','a2','cL',['Right hand plays 2 notes for every 1 left-hand note. Metronome at 60.'],'raghu','s','HC:267'],
+ ['Week 8 check','a3','f45','four','pehla','s',null],
+ ['Scale over a chord','a1','cR',['Left hand holds the C chord. Right hand plays the C scale up and down.','Then G chord + G scale, F chord + F scale, Am chord + A minor scale.'],'kalho','k','L6:166','posture'],
+ ['Five-finger pattern over a chord','a2','c5r',['Left hand holds the chord. Right hand plays 1-2-3-4-5-4-3-2-1 over it.'],'pehla','k','L6:435'],
+ ['Chord shifting','a3','shift5',['Do yesterday\'s exercise travelling: C, then D, then E, moving both hands each time.'],'raghu','k','L6:674'],
+ ['Kal Ho Naa Ho, both hands','a4','triadsM',['Left hand: C chord under line 1, Am under line 2. Keep the melody steady.'],'kalho','s','TD:30'],
+ ['Coordination 3','a5','lh2',['Left hand plays a 1-2-3-5 pattern while the right hand holds a note, then plays the scale.'],'pehla','s','HC:320'],
+ ['Pehla Nasha, both hands','a1','four',['Pehla Nasha with left-hand block chords C, Am, F, G.'],'pehla','s','TD:370'],
+ ['Week 9 check','a2','cR','triadsW','kalho','s',null],
+ ['Reading chords over lyrics','a3','lh1',['Open a PIX notation page. Chord names sit above the words. Play the chord exactly on that word.','Try it with Saare Jahan Se Achha below.'],'sare','s','L6:807','posture'],
+ ['The 7 chords of a scale','a4','walk',['Write the 7 chords of C major by stacking alternate notes: C Dm Em F G Am Bdim.'],'sare','k','CF:96'],
+ ['I, IV and V','a5','walk',['In a major key, try chords I, IV, V first (C, F, G). Pick the one that contains the held melody note.'],'sare','s','CF:590'],
+ ['F minor and Tum Hi Ho','fmN','fe3',null,'tumhiho:0-1','s','THH:96'],
+ ['Tum Hi Ho, verse','a1','fe2',null,'tumhiho','s','THH:320'],
+ ['Tum Hi Ho with left hand','a2','four',['Left hand roots under Tum Hi Ho: Am, F, C, G. One per line half.'],'tumhiho','s','L6:807'],
+ ['Week 10 check','a3','fmN','walk','tumhiho','s',null],
+ ['Broken chords 5-3-1','a1','brokenLH',null,'tumhiho','k','L7:119','posture'],
+ ['The chord walk','a2','walk',null,'sare','k','L7:394'],
+ ['Left-hand stretch (3 minutes max)','a3','brokenLH',['Little finger and thumb an octave apart (C3 to C4). Move the stretch up the white keys. Stop at 3 minutes.'],'tumhiho','s','LH:467'],
+ ['Contrary motion','a4','cR',['Both thumbs on middle C. Right hand goes up, left hand goes down, then back.'],'sare','s','L7:451'],
+ ['Arpeggio under a song (4/4)','a5','brokenLH',['Pehla Nasha with the left hand broken 1-5-8 on each chord.'],'pehla','s','L7:579'],
+ ['3/4 feel','a1','waltz','rhythm:60w','tumhiho','k','Rh:793'],
+ ['Week 11 check','a2','brokenLH','walk','tumhiho','s',null],
+ ['The 1-5-8-10 shape','a3','ext',null,'lagja:0-0','k','L8:137','posture'],
+ ['Pattern 1 (4/4)','a4','ext',['Pattern 1 under Tum Hi Ho, one chord per bar.'],'lagja:0-1','s','L8:223'],
+ ['Pattern 4 (3/4)','a5','waltz',null,'lagja:0-1','k','L8:919'],
+ ['Lag Ja Gale','a1','waltz',null,'lagja','s','L8:994'],
+ ['Lag Ja Gale with the 3/4 pattern','a2','waltz',['Left hand pattern 4 under the melody, very slowly.'],'lagja','s','L8:994'],
+ ['Coordination 4','a3','fe3',['Right hand plays 4 notes for each left-hand note. Metronome at 50.'],'zara','s','HC:468'],
+ ['Week 12 check','a4','ext','waltz','lagja','s',null],
+ ['Ear 1: the song\'s 7 notes','a5','cR',['Pick a song you know in C. Its melody uses only C D E F G A B. Find the first line by ear.'],'zara','s','Ear:143','posture'],
+ ['Ear 2: a new song','a1','gR',['Take a song not in this app. Hum line 1, try notes from its scale, keep what matches. 2 lines is a win.'],'dil','s','Ear:243'],
+ ['Chords by ear','a2','walk',['Add I, IV, V chords under the line you found yesterday.'],'zara','s','CF:735'],
+ ['Polish: your weakest song','a3','fe2',null,'kalho','s',null],
+ ['Polish: Pehla Nasha','a4','fe3',null,'pehla','s',null],
+ ['Recital','a1',null,['Play three songs start to finish. Record them on your phone. Compare with your Week 2 recording.'],'tumhiho','s','Tip:71'],
+];
+// Rhythm specs
+function rhythmSpec(code,wi){const base={bpm:60+Math.min(40,wi*4),beats:4,how:'Count 1 2 3 4 out loud. Clap or press C on every click. Raise by 5 only after two clean minutes.'};
+  if(code==='rhythm:60e')return {bpm:60,beats:4,how:'Eighth notes: say "1 and 2 and 3 and 4 and". Two notes per click.'};
+  if(code==='rhythm:60w')return {bpm:60,beats:3,how:'3/4: count 1 2 3. Accent 1. This is the feel of Lag Ja Gale.'};
+  if(code==='rhythm:70')return {bpm:70,beats:4,how:'Clap the rhythm of Happy Birthday first, then play it on the click.'};
+  if(code==='rhythm:60')return {bpm:60,beats:4,how:'Whole note: hold for 4 clicks. Half: 2. Quarter: 1. Play C each way.'};
+  return base}
+function mk(type,title,minutes,extra){return Object.assign({type,title,minutes},extra)}
+function buildDay(n){const p=P[n-1];const [t,warm,tech,nw,song,gate,vid,tip]=p;const wi=Math.floor((n-1)/7);const d=((n-1)%7)+1;
+  const blocks=[];const bump=Math.min(30,wi*4);
+  const ex=(id)=>{if(id==='call1')return {nof:1,t:'Note caller: white keys',h:'RH',n:callerNotes(n,10,false),bpm:40,how:['Play the key that lights up. Say its name out loud as you play.','No stickers on the keys. Find each one from the black-key groups.']};
+    if(id==='call2')return {nof:1,t:'Note caller: black keys too',h:'RH',n:callerNotes(n+7,12,true),bpm:40,how:['Black keys now. C# and Db are the same key.']};
+    if(id==='scaleCall'){const roots=callerNotes(n,8,false,60,71);return {nof:1,t:'Scale caller',h:'RH',n:roots,bpm:40,how:['A scale name appears. Within 5 seconds, play its first note, then the whole scale for yourself.','The mic checks the first note. Be honest about the rest, as PIX says.']}}
+    if(id==='chordCall'){return {nof:1,t:'Chord caller',h:'RH',n:callerNotes(n+3,8,true,57,69),bpm:40,how:['Play the root of each chord that lights up, then the full chord (1-5-8 major, 1-4-8 minor).','The mic checks the root note.']}}
+    const e=EX[id];return Object.assign({},e,{bpm:e.bpm+bump})};
+  const warmMin=5,techMin=tech?9:0;
+  if(tip==='posture')blocks.push(mk('self','Posture check',2,{items:POSTURE}));
+  blocks.push(mk('ex','Warm-up',warmMin,{ex:ex(warm),cue:HAND_RULES[(n-1)%HAND_RULES.length]}));
+  if(tech)blocks.push(mk('ex','Technique',techMin,{ex:ex(tech),gate:gate==='k'}));
+  if(nw){if(typeof nw==='string'&&nw.startsWith('rhythm'))blocks.push(mk('rhythm','Rhythm',6,{rhythm:rhythmSpec(nw,wi)}));
+    else if(typeof nw==='string')blocks.push(mk('ex','New today',7,{ex:ex(nw),gate:gate==='x'}));
+    else blocks.push(mk('self','New today',7,{items:nw}))}
+  else blocks.push(mk('rhythm','Rhythm',5,{rhythm:rhythmSpec('',wi)}));
+  const [sid,range]=song.split(':');let sEx;if(range){const [a,b]=range.split('-').map(Number);sEx=songEx(sid,a,b)}else sEx=songEx(sid);
+  blocks.push(mk('ex','Song: '+SONGS[sid].t,8,{ex:sEx,gate:gate==='s'}));
+  if(!blocks.some(b=>b.gate)){const last=blocks.filter(b=>b.type==='ex').pop();last.gate=true}
+  const v=vlink(vid&&vid.replace(/^2:/,''));
+  return {n,week:wi+1,d,theme:W13[wi][0],goal:W13[wi][1],title:t,blocks,videos:[],video:v,milestone:/check|Recital/.test(t)};
+}
+const WEEKS=W13.map(([theme,goal])=>({theme,goal}));
+const REVIEW_SONGS={};
+const DAYS=Array.from({length:90},(_,i)=>buildDay(i+1));
+function fit(day,total=30){const sum=day.blocks.reduce((a,b)=>a+b.minutes,0);let acc=0;day.blocks.forEach((b,i)=>{b.minutes=i===day.blocks.length-1?total-acc:Math.max(2,Math.round(b.minutes*total/sum));acc+=b.minutes})}
+DAYS.forEach(day=>{fit(day);day.minutes=day.blocks.reduce((a,b)=>a+b.minutes,0)});
+const SONG_UNLOCK={twinkle:1,ode:1,hbd:8,jgm:15,kalho:24,pehla:36,raghu:52,sare:64,tumhiho:67,lagja:78,zara:83,dil:85};
+
+const CATALOG=[{"t":"Neele Neele Ambar Par","f":"Kalaakaar","y":1983,"d":1,"v":"https://www.youtube.com/watch?v=J1yYHlWXm6Y","n":"https://pixseries.com/neele-neele-ambar-par-notations-2/","w":84959,"e":0,"l":"Hindi"},{"t":"Labon Ko","f":"Bhool Bhulaiyaa","y":2007,"d":1,"v":"https://www.youtube.com/watch?v=7q1RPPM4EFA","n":"https://pixseries.com/labon-ko-notations/","w":33072,"e":0,"l":"Hindi"},{"t":"Yeh Shaam Mastani","f":"Kati Patang","y":1970,"d":1,"v":"https://www.youtube.com/watch?v=7ISnCnGaHgE","n":"https://pixseries.com/yeh-shaam-mastani-notation/","w":28324,"e":0,"l":"Hindi"},{"t":"Suraj Hua Maddham","f":"Kabhi Khushi Kabhie Gham","y":2001,"d":1,"v":"https://www.youtube.com/watch?v=_lcOa5SPm4E","n":"https://pixseries.com/suraj-hua-maddham-notations/","w":21809,"e":0,"l":"Hindi"},{"t":"Aila Re Aillaa","f":"Sooryavanshi","y":2021,"d":1,"v":"https://www.youtube.com/watch?v=jdAwcFJihrQ","n":"https://pixseries.com/aila-re-aila-notations/","w":7043,"e":0,"l":"Hindi"},{"t":"Yeh Dil Deewana","f":"Pardes","y":1997,"d":1,"v":"","n":"https://pixseries.com/yeh-dil-dewaana-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Bairan","f":"Single","y":"","d":1,"v":"","n":"https://pixseries.com/bairan-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Chaleya","f":"Jawan","y":2023,"d":1,"v":"","n":"https://pixseries.com/chaleya-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jingle Bells","f":"Traditional","y":1857,"d":1,"v":"","n":"https://pixseries.com/jingle-bells-notations/","w":0,"e":0,"l":"English"},{"t":"We Wish You a Merry Christmas","f":"Traditional","y":"","d":1,"v":"","n":"https://pixseries.com/we-wish-you-a-merry-christmas-notations/","w":0,"e":0,"l":"English"},{"t":"O Sanam","f":"Single (Lucky Ali)","y":1997,"d":1,"v":"","n":"https://pixseries.com/oh-sanam-lucky-ali-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Kacha Badam","f":"Viral (Bhuban Badyakar)","y":2021,"d":1,"v":"","n":"https://pixseries.com/kacha-badam-notations/","w":0,"e":0,"l":"Bengali"},{"t":"Laadki","f":"Coke Studio India","y":2022,"d":1,"v":"","n":"https://pixseries.com/laadki-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"KGF Theme","f":"KGF","y":2018,"d":1,"v":"","n":"https://pixseries.com/kgf-theme-notations/","w":0,"e":0,"l":"Instrumental"},{"t":"Papa Kehte Hain","f":"Qayamat Se Qayamat Tak","y":1988,"d":1,"v":"","n":"https://pixseries.com/gr/","w":0,"e":0,"l":"Hindi"},{"t":"BGMI / PUBG Theme","f":"Game theme","y":"","d":1,"v":"","n":"https://pixseries.com/bgmi-theme-notations-pubg/","w":0,"e":0,"l":"Instrumental"},{"t":"Bachpan Ka Pyaar","f":"Viral","y":2021,"d":1,"v":"","n":"https://pixseries.com/bachpan-ka-pyaar-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Baawla","f":"Single (Badshah)","y":2021,"d":1,"v":"","n":"https://pixseries.com/baawla-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Bella Ciao","f":"Traditional (Italian)","y":"","d":1,"v":"","n":"https://pixseries.com/bella-ciao-notations/","w":0,"e":0,"l":"Italian"},{"t":"Sendur Lal Chadhayo","f":"Aarti","y":"","d":1,"v":"","n":"https://pixseries.com/shendur-lal-chadhayo-notations/","w":0,"e":0,"l":"Marathi/Hindi"},{"t":"Oo Antava","f":"Pushpa: The Rise","y":2021,"d":1,"v":"","n":"https://pixseries.com/oo-antava-notations/","w":0,"e":0,"l":"Telugu/Hindi"},{"t":"Chaand Baaliyan","f":"Single (Aditya A)","y":2022,"d":1,"v":"","n":"https://pixseries.com/chaand-baaliyaan-notes/","w":0,"e":0,"l":"Hindi"},{"t":"Tum Hi Ho","f":"Aashiqui 2","y":2013,"d":2,"v":"https://www.youtube.com/watch?v=DjjIo8uPhZI","n":"","w":409176,"e":1,"l":"Hindi"},{"t":"Gulabi Aankhen","f":"The Train","y":1970,"d":2,"v":"https://www.youtube.com/watch?v=BtP0LpFgXqg","n":"https://pixseries.com/gulabi-aankhein-notations/","w":145148,"e":0,"l":"Hindi"},{"t":"Nadaaniyan","f":"Single (Akshath)","y":2024,"d":2,"v":"https://www.youtube.com/watch?v=tyDDmy3aUtU","n":"","w":137102,"e":1,"l":"Hindi"},{"t":"Kesariya","f":"Brahmastra","y":2022,"d":2,"v":"https://www.youtube.com/watch?v=CrPo2dPotdc","n":"https://pixseries.com/kesariya-notations/","w":135131,"e":0,"l":"Hindi"},{"t":"Kal Ho Naa Ho (Theme)","f":"Kal Ho Naa Ho","y":2003,"d":2,"v":"https://www.youtube.com/watch?v=_0AvHpeCYBg","n":"https://pixseries.com/kal-ho-na-ho-theme-notations/","w":73765,"e":0,"l":"Hindi"},{"t":"Jo Tum Mere Ho","f":"Single (Anuv Jain)","y":2024,"d":2,"v":"https://www.youtube.com/watch?v=qGKHBLMPRic","n":"","w":73162,"e":1,"l":"Hindi"},{"t":"Satranga","f":"Animal","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=nW8Czoe-SdU","n":"https://pixseries.com/satranga-notations/","w":65980,"e":0,"l":"Hindi"},{"t":"Tere Liye","f":"Veer-Zaara","y":2004,"d":2,"v":"https://www.youtube.com/watch?v=rErQzCfALFw","n":"","w":64877,"e":1,"l":"Hindi"},{"t":"Bhool Bhulaiyaa 2 (Title Track)","f":"Bhool Bhulaiyaa 2","y":2022,"d":2,"v":"https://www.youtube.com/watch?v=OllSXlQxZwU","n":"https://pixseries.com/bhool-bhulaiya-title-track-notations/","w":55656,"e":0,"l":"Hindi"},{"t":"Husn","f":"Single (Anuv Jain)","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=MHllmiZphOs","n":"","w":53993,"e":1,"l":"Hindi"},{"t":"Tujhe Dekha To","f":"Dilwale Dulhania Le Jayenge","y":1995,"d":2,"v":"https://www.youtube.com/watch?v=KPtD12B3hhA","n":"","w":53390,"e":1,"l":"Hindi"},{"t":"Mere Sapno Ki Rani","f":"Aradhana","y":1969,"d":2,"v":"https://www.youtube.com/watch?v=jHrnfuL4Xgc","n":"","w":51839,"e":1,"l":"Hindi"},{"t":"Raataan Lambiyan","f":"Shershaah","y":2021,"d":2,"v":"https://www.youtube.com/watch?v=UpRH7_KPlSc","n":"","w":50770,"e":1,"l":"Hindi"},{"t":"Saari Duniya Jala Denge","f":"Animal","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=Ohw7h8hS0vg","n":"https://pixseries.com/saari-duniya-jala-denge-notations/","w":39366,"e":0,"l":"Hindi"},{"t":"Ek Ajnabee Haseena Se","f":"Ajnabee","y":1974,"d":2,"v":"https://www.youtube.com/watch?v=-9mbsiOUiZE","n":"https://pixseries.com/ek-ajnabee-haseena-se-notations/","w":37426,"e":0,"l":"Hindi"},{"t":"Pyar Hua Ikrar Hua","f":"Shree 420","y":1955,"d":2,"v":"https://www.youtube.com/watch?v=4H__3Tl--nY","n":"","w":35803,"e":1,"l":"Hindi"},{"t":"Dekha Ek Khwab","f":"Silsila","y":1981,"d":2,"v":"https://www.youtube.com/watch?v=8PAU_Ksatag","n":"","w":35646,"e":1,"l":"Hindi"},{"t":"Tere Vaaste","f":"Zara Hatke Zara Bachke","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=4i48wbF4tS0","n":"https://pixseries.com/tere-vaaste-notations/","w":34365,"e":0,"l":"Hindi"},{"t":"Chhookar Mere Man Ko","f":"Yaarana","y":1981,"d":2,"v":"https://www.youtube.com/watch?v=ZapWHRSSBv4","n":"","w":34347,"e":1,"l":"Hindi"},{"t":"Lag Jaa Gale","f":"Woh Kaun Thi?","y":1964,"d":2,"v":"https://www.youtube.com/watch?v=nbPsrein6Hg","n":"https://pixseries.com/lag-jaa-gale-notations/","w":34276,"e":0,"l":"Hindi"},{"t":"Dil Tu Jaan Tu","f":"Single (Gurnazar)","y":2024,"d":2,"v":"https://www.youtube.com/watch?v=Hvf7STXk2mY","n":"","w":31070,"e":1,"l":"Hindi"},{"t":"Tum Se","f":"Teri Baaton Mein Aisa Uljha Jiya","y":2024,"d":2,"v":"https://www.youtube.com/watch?v=rDcnbJKk7LU","n":"","w":30979,"e":1,"l":"Hindi"},{"t":"Meri Jaan","f":"Gangubai Kathiawadi","y":2022,"d":2,"v":"https://www.youtube.com/watch?v=h4P9_fIAOtg","n":"","w":27762,"e":1,"l":"Hindi"},{"t":"O O Jaane Jaana","f":"Pyaar Kiya To Darna Kya","y":1998,"d":2,"v":"https://www.youtube.com/watch?v=CMOf1lAgOos","n":"https://pixseries.com/oh-oh-jane-jana-notations/","w":27721,"e":0,"l":"Hindi"},{"t":"Kya Hua Tera Wada","f":"Hum Kisise Kum Nahin","y":1977,"d":2,"v":"https://www.youtube.com/watch?v=-57Lw2g0gYU","n":"https://pixseries.com/kya-hua-tera-wada-notations/","w":27501,"e":0,"l":"Hindi"},{"t":"Filhaal 2 Mohabbat","f":"Single (B Praak)","y":2021,"d":2,"v":"https://www.youtube.com/watch?v=Dj85FSU9UeE","n":"https://pixseries.com/filhaal-2-notations/","w":23450,"e":0,"l":"Hindi"},{"t":"Ve Haaniyaan","f":"Single (Danny, Avvy Sra)","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=QPpOmIoKFTg","n":"","w":22245,"e":1,"l":"Hindi"},{"t":"Jai Shri Ram","f":"Adipurush","y":2023,"d":2,"v":"https://www.youtube.com/watch?v=r2OoVw17zko","n":"https://pixseries.com/tera-ban-jaunga-notations/","w":19445,"e":0,"l":"Hindi"},{"t":"Humein Tumse Pyar Kitna","f":"Kudrat","y":1981,"d":2,"v":"https://www.youtube.com/watch?v=IrvH_RvnNF0","n":"","w":18367,"e":1,"l":"Hindi"},{"t":"Toh Phir Aao","f":"Awarapan","y":2007,"d":2,"v":"https://www.youtube.com/watch?v=i6gqHJQ_dnM","n":"https://pixseries.com/toh-phir-aao/","w":14123,"e":0,"l":"Hindi"},{"t":"Mere Khwabon Mein","f":"Dilwale Dulhania Le Jayenge","y":1995,"d":2,"v":"https://www.youtube.com/watch?v=7hpm4q-4rB0","n":"https://pixseries.com/mere-khwabon-mein-notations/","w":13656,"e":0,"l":"Hindi"},{"t":"Mile Ho Tum","f":"Fever","y":2016,"d":2,"v":"https://www.youtube.com/watch?v=Joxn8cFT17s","n":"","w":8950,"e":1,"l":"Hindi"},{"t":"Nayan","f":"Single (Dhvani Bhanushali, Jubin Nautiyal)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=7ITOOrynwUU","n":"","w":8599,"e":1,"l":"Hindi"},{"t":"Heer Ranjha","f":"Single (Bhuvan Bam)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=KZyGWmhaMh0","n":"","w":6626,"e":1,"l":"Hindi"},{"t":"Aane Se Uske Aaye Bahar","f":"Jeene Ki Raah","y":1969,"d":2,"v":"https://www.youtube.com/watch?v=QIx5J8NMSMU","n":"","w":6551,"e":1,"l":"Hindi"},{"t":"Tera Zikr","f":"Single (Darshan Raval)","y":2017,"d":2,"v":"https://www.youtube.com/watch?v=S8eXBKAH4OY","n":"","w":5453,"e":1,"l":"Hindi"},{"t":"Hone Laga Tumse Pyaar","f":"Single (Jubin Nautiyal)","y":2021,"d":2,"v":"https://www.youtube.com/watch?v=yGT3nywJ4Is","n":"","w":3554,"e":1,"l":"Hindi"},{"t":"Dil Lauta Do","f":"Single (Jubin Nautiyal)","y":2021,"d":2,"v":"https://www.youtube.com/watch?v=0n4wkigAl0A","n":"https://pixseries.com/dil-lauta-do-notations/","w":2995,"e":0,"l":"Hindi"},{"t":"Naam","f":"Single (Tulsi Kumar, Millind Gaba)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=Ky5O5r1HwrI","n":"","w":2490,"e":1,"l":"Hindi"},{"t":"Tere Bina","f":"Single (Salman Khan)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=zIcUs9abqnU","n":"","w":2331,"e":1,"l":"Hindi"},{"t":"Mehendi Wale Haath","f":"Single (Guru Randhawa)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=NOT8BXkdEhQ","n":"","w":1941,"e":1,"l":"Hindi"},{"t":"Haunsla Na Chhadin","f":"Single (Ashok Mastie)","y":2020,"d":2,"v":"https://www.youtube.com/watch?v=cYqY1_OtJNo","n":"","w":629,"e":1,"l":"Punjabi"},{"t":"Tera Mera Rishta Purana","f":"Awarapan","y":2007,"d":2,"v":"","n":"https://pixseries.com/tera-mera-rishta-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Phoolon Ka Taaron Ka","f":"Hare Rama Hare Krishna","y":1971,"d":2,"v":"","n":"https://pixseries.com/phoolo-ka-taroon-ka-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Vande Mataram","f":"Patriotic","y":"","d":2,"v":"","n":"https://pixseries.com/vande-mataram-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Main Koi Aisa Geet Gaoon","f":"Yes Boss","y":1997,"d":2,"v":"","n":"https://pixseries.com/main-koi-aisa-geet-gaaoon-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jaiye Sajana","f":"Dhurandhar 2","y":2026,"d":2,"v":"","n":"https://pixseries.com/jaiye-sajana-dhurandhar-2-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Jay Adhyashakti Aarti","f":"Aarti","y":"","d":2,"v":"","n":"https://pixseries.com/jay-adhyashakti-aarti-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Shree Krishna Govind Hare Murari","f":"Bhajan","y":"","d":2,"v":"","n":"https://pixseries.com/shree-krishna-govind-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jhoom","f":"Single (Ali Zafar)","y":2011,"d":2,"v":"","n":"https://pixseries.com/jhoom-ali-zafar-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Falak Tu Garaj Tu","f":"KGF Chapter 2","y":2022,"d":2,"v":"","n":"https://pixseries.com/falak-tu-garaj-tu-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Raabta","f":"Agent Vinod","y":2012,"d":2,"v":"","n":"https://pixseries.com/raabata-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Shree Krishna Sharanam Mamah","f":"Bhajan","y":"","d":2,"v":"","n":"https://pixseries.com/shree-krishna-sarnam-mama-notations/","w":0,"e":0,"l":"Sanskrit"},{"t":"Ae Watan","f":"Raazi","y":2018,"d":2,"v":"","n":"https://pixseries.com/ae-watan-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Rang Barse","f":"Silsila","y":1981,"d":2,"v":"","n":"https://pixseries.com/rang-barse-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Desires","f":"Single (AP Dhillon)","y":2021,"d":2,"v":"","n":"https://pixseries.com/desires-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"2 Phone","f":"Single (Diljit Dosanjh)","y":2018,"d":2,"v":"","n":"https://pixseries.com/2-phone-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"O Mere Dil Ke Chain","f":"Mere Jeevan Saathi","y":1972,"d":2,"v":"","n":"https://pixseries.com/o-mere-dil-ke-chain-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Maiyya Mainu","f":"Jersey","y":2022,"d":2,"v":"","n":"https://pixseries.com/maiyya-mainu-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Chandi Ki Daal Par","f":"Hello Brother","y":1999,"d":2,"v":"","n":"https://pixseries.com/chandi-ki-daal-par-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Mere Yaaraa","f":"Sooryavanshi","y":2021,"d":2,"v":"","n":"https://pixseries.com/mere-yaaraa-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Kinna Chir","f":"Single (The PropheC)","y":2019,"d":2,"v":"","n":"https://pixseries.com/kinna-chir-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Go Pagal","f":"Jolly LLB 2","y":2017,"d":2,"v":"","n":"https://pixseries.com/go-pagal-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Janam Janam","f":"Dilwale","y":2015,"d":3,"v":"https://www.youtube.com/watch?v=gKqWjJAFWfs","n":"https://pixseries.com/janam-janam-diwale-notations/","w":243129,"e":0,"l":"Hindi"},{"t":"Main Agar Kahoon","f":"Om Shanti Om","y":2007,"d":3,"v":"https://www.youtube.com/watch?v=QSgMlvioQvQ","n":"","w":219066,"e":1,"l":"Hindi"},{"t":"Apna Bana Le","f":"Bhediya","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=FDzsm8r75A4","n":"https://pixseries.com/apna-bana-le-notations/","w":155873,"e":0,"l":"Hindi"},{"t":"Raanjhan","f":"Do Patti","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=UzH_8_KNoWM","n":"","w":138368,"e":1,"l":"Hindi"},{"t":"Maan Meri Jaan","f":"Single (King)","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=I9-YY_ZkEOw","n":"https://pixseries.com/maan-meri-jaan-king-notations/","w":128753,"e":0,"l":"Hindi"},{"t":"Tere Hawaale","f":"Laal Singh Chaddha","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=mrFgjiF5a-g","n":"","w":88025,"e":1,"l":"Hindi"},{"t":"Khairiyat","f":"Chhichhore","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=DECzacugg7Q","n":"","w":79274,"e":1,"l":"Hindi"},{"t":"Chura Liya Hai Tumne Jo Dil Ko","f":"Yaadon Ki Baaraat","y":1973,"d":3,"v":"https://www.youtube.com/watch?v=ZeGJygV80Ig","n":"https://pixseries.com/chura-liya-notations/","w":76868,"e":0,"l":"Hindi"},{"t":"Srivalli","f":"Pushpa: The Rise","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=S9rtn6KrahY","n":"https://pixseries.com/srivalli-notes/","w":74273,"e":0,"l":"Hindi/Telugu"},{"t":"Jab Koi Baat Bigad Jaye","f":"Jurm","y":1990,"d":3,"v":"https://www.youtube.com/watch?v=mQIH6y76vYY","n":"https://pixseries.com/jab-koi-baat-bigad-jaaye-notations/","w":70045,"e":0,"l":"Hindi"},{"t":"Tujh Mein Rab Dikhta Hai","f":"Rab Ne Bana Di Jodi","y":2008,"d":3,"v":"https://www.youtube.com/watch?v=YcJAoRtSrHw","n":"https://pixseries.com/tujhme-rab-dikhta-hai-notations/","w":69537,"e":0,"l":"Hindi"},{"t":"Tum Hi Aana","f":"Marjaavaan","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=fdohDbO66AA","n":"https://pixseries.com/tum-hi-aana-notations/","w":68264,"e":0,"l":"Hindi"},{"t":"Tera Yaar Hoon Main","f":"Sonu Ke Titu Ki Sweety","y":2018,"d":3,"v":"https://www.youtube.com/watch?v=0Y3f5Hli6l8","n":"https://pixseries.com/tera-yaar-hoon-mein-notations/","w":64348,"e":0,"l":"Hindi"},{"t":"Mann Mera","f":"Table No. 21","y":2013,"d":3,"v":"https://www.youtube.com/watch?v=7Fj-Acfwjoo","n":"https://pixseries.com/mann-mera-notations/","w":59055,"e":0,"l":"Hindi"},{"t":"Sajni","f":"Laapataa Ladies","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=ClNO-Fig6RM","n":"","w":52834,"e":1,"l":"Hindi"},{"t":"Papa Meri Jaan","f":"Animal","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=crviZQ_fYM4","n":"","w":52761,"e":1,"l":"Hindi"},{"t":"Likhe Jo Khat Tujhe","f":"Kanyadaan","y":1968,"d":3,"v":"https://www.youtube.com/watch?v=yV9Kn3yY1O0","n":"https://pixseries.com/likhe-jo-khat-tujhe-notations/","w":52458,"e":0,"l":"Hindi"},{"t":"Bekhayali","f":"Kabir Singh","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=viblhwvTWQM","n":"https://pixseries.com/bekhayali-notations/","w":51261,"e":0,"l":"Hindi"},{"t":"Tu Tu Hai Wahi","f":"Yeh Vaada Raha","y":1982,"d":3,"v":"https://www.youtube.com/watch?v=AQDpZuim9BM","n":"https://pixseries.com/tu-tu-hai-wahi-notations/","w":47240,"e":0,"l":"Hindi"},{"t":"Tu Jaane Na","f":"Ajab Prem Ki Ghazab Kahani","y":2009,"d":3,"v":"https://www.youtube.com/watch?v=28xOQX1QzdY","n":"https://pixseries.com/tu-jaane-na-notations/","w":44193,"e":0,"l":"Hindi"},{"t":"Ishq Hai","f":"Mismatched (S3)","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=vivlqGBhCGI","n":"","w":43654,"e":1,"l":"Hindi"},{"t":"Teri Mitti","f":"Kesari","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=foead2BHzmo","n":"https://pixseries.com/teri-mitti-notations/","w":43377,"e":0,"l":"Hindi"},{"t":"Lehra Do","f":"83","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=gs1Tsi4x_8A","n":"","w":42993,"e":1,"l":"Hindi"},{"t":"Dil Ibaadat","f":"Tum Mile","y":2009,"d":3,"v":"https://www.youtube.com/watch?v=kcZ4bSFrHSo","n":"https://pixseries.com/dil-ibaadat-notations/","w":42605,"e":0,"l":"Hindi"},{"t":"Phirta Rahoon Dar Badar","f":"Hamari Adhuri Kahani","y":2015,"d":3,"v":"https://www.youtube.com/watch?v=4ssjjRp-_3Y","n":"","w":39699,"e":1,"l":"Hindi"},{"t":"Ajeeb Dastaan Hai Yeh","f":"Dil Apna Aur Preet Parai","y":1960,"d":3,"v":"https://www.youtube.com/watch?v=85kXB4zSVss","n":"","w":39643,"e":1,"l":"Hindi"},{"t":"Chand Sifarish","f":"Fanaa","y":2006,"d":3,"v":"https://www.youtube.com/watch?v=jXDYKfZzjs8","n":"","w":39496,"e":1,"l":"Hindi"},{"t":"Zindagi Ek Safar Hai Suhana","f":"Andaz","y":1971,"d":3,"v":"https://www.youtube.com/watch?v=v5nzfZh7Ypc","n":"","w":34420,"e":1,"l":"Hindi"},{"t":"Lut Gaye","f":"Single (Jubin Nautiyal)","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=FhrAGcMOViM","n":"","w":34127,"e":1,"l":"Hindi"},{"t":"Hai Apna Dil To Awara","f":"Solva Saal","y":1958,"d":3,"v":"https://www.youtube.com/watch?v=mPINb--MEMc","n":"https://pixseries.com/hai-apna-dil-to-awara-notations/","w":32548,"e":0,"l":"Hindi"},{"t":"O Maahi","f":"Dunki","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=cWOmNuwpIjM","n":"https://pixseries.com/oh-maahi-notations/","w":32379,"e":0,"l":"Hindi"},{"t":"Heeriye","f":"Single (Jasleen Royal, Arijit Singh)","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=GEHL-zPu0c8","n":"https://pixseries.com/heeriye-notations/","w":31630,"e":0,"l":"Hindi"},{"t":"Aaj Ki Raat","f":"Stree 2","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=jJQ8NasN3ts","n":"","w":31563,"e":1,"l":"Hindi"},{"t":"Zindagi Kuch Toh Bata","f":"Bajrangi Bhaijaan","y":2015,"d":3,"v":"https://www.youtube.com/watch?v=7Go44FdfTys","n":"https://pixseries.com/zindagi-kuch-to-bata-notations/","w":30924,"e":0,"l":"Hindi"},{"t":"Namo Namo","f":"Kedarnath","y":2018,"d":3,"v":"https://www.youtube.com/watch?v=GZSckhYgPC0","n":"","w":30226,"e":1,"l":"Hindi"},{"t":"Mere Samne Wali Khidki Mein","f":"Padosan","y":1968,"d":3,"v":"https://www.youtube.com/watch?v=dQkiLI0bPGs","n":"","w":29647,"e":1,"l":"Hindi"},{"t":"Soulmate","f":"Single (Badshah, Arijit Singh)","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=fyJU9CzhvVk","n":"","w":29131,"e":1,"l":"Hindi"},{"t":"Tum Ho Toh","f":"Saiyaara","y":2025,"d":3,"v":"https://www.youtube.com/watch?v=c0g7Buzd0CM","n":"","w":28424,"e":1,"l":"Hindi"},{"t":"Tere Jaisa Yaar Kahan","f":"Yaarana","y":1981,"d":3,"v":"https://www.youtube.com/watch?v=nRj5j0ywQFw","n":"https://pixseries.com/tere-jaisa-yaar-kahan-notations/","w":28136,"e":0,"l":"Hindi"},{"t":"Ae Mere Humsafar","f":"Qayamat Se Qayamat Tak","y":1988,"d":3,"v":"https://www.youtube.com/watch?v=PQHGQfw_7TI","n":"","w":28045,"e":1,"l":"Hindi"},{"t":"Mast Magan","f":"2 States","y":2014,"d":3,"v":"https://www.youtube.com/watch?v=siRqyLqH0pQ","n":"https://pixseries.com/mast-magan-notations/","w":26889,"e":0,"l":"Hindi"},{"t":"Student of the Year (Wedding scene theme)","f":"Student of the Year","y":2012,"d":3,"v":"https://www.youtube.com/watch?v=fhla3FtlAg4","n":"","w":26414,"e":1,"l":"Instrumental"},{"t":"Khuda Jaane","f":"Bachna Ae Haseeno","y":2008,"d":3,"v":"https://www.youtube.com/watch?v=1fbv88WuZMg","n":"","w":26170,"e":1,"l":"Hindi"},{"t":"Hua Main","f":"Animal","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=aO5q_3CrrEk","n":"https://pixseries.com/hua-main-notations/","w":26035,"e":0,"l":"Hindi"},{"t":"Zara Sa","f":"Jannat","y":2008,"d":3,"v":"https://www.youtube.com/watch?v=QwRylV1r0BM","n":"","w":25714,"e":1,"l":"Hindi"},{"t":"Soch Na Sake","f":"Airlift","y":2016,"d":3,"v":"https://www.youtube.com/watch?v=Kfn-FgLuM5M","n":"https://pixseries.com/soch-na-sake-notations/","w":25017,"e":0,"l":"Hindi"},{"t":"Sanam Teri Kasam","f":"Sanam Teri Kasam","y":2016,"d":3,"v":"https://www.youtube.com/watch?v=dsDsCnjdxKU","n":"","w":24535,"e":1,"l":"Hindi"},{"t":"Malang Sajna","f":"Single (Sachet-Parampara)","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=Z6yzXZht5L0","n":"","w":24294,"e":1,"l":"Hindi"},{"t":"Pardesiya","f":"Param Sundari","y":2025,"d":3,"v":"https://www.youtube.com/watch?v=B4aRacQtlPU","n":"","w":24199,"e":1,"l":"Hindi"},{"t":"Dil Ne Yeh Kaha Hai Dil Se","f":"Dhadkan","y":2000,"d":3,"v":"https://www.youtube.com/watch?v=Jhn9kOq3bzw","n":"https://pixseries.com/dill-ne-ye-kaha-hai-dill-se-notations/","w":23901,"e":0,"l":"Hindi"},{"t":"Deewaniyat (Title Track)","f":"Ek Deewane Ki Deewaniyat","y":2025,"d":3,"v":"https://www.youtube.com/watch?v=_M8tGLOqzWQ","n":"","w":23284,"e":1,"l":"Hindi"},{"t":"Dekhha Tenu","f":"Mr. & Mrs. Mahi","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=27Y06BejdHI","n":"","w":22959,"e":1,"l":"Hindi"},{"t":"O Bedardeya","f":"Tu Jhoothi Main Makkaar","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=1uzG7QZ3PeU","n":"https://pixseries.com/oo-bedardeya-notations/","w":22188,"e":0,"l":"Hindi"},{"t":"Pehla Pyaar","f":"Kabir Singh","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=Jwyo4XyHHmU","n":"","w":22137,"e":1,"l":"Hindi"},{"t":"Aap Ki Nazron Ne Samjha","f":"Anpadh","y":1962,"d":3,"v":"https://www.youtube.com/watch?v=n7Ajn9PYmdA","n":"","w":21554,"e":1,"l":"Hindi"},{"t":"Guzarish","f":"Ghajini","y":2008,"d":3,"v":"https://www.youtube.com/watch?v=HlZ0u6WTZWc","n":"","w":21358,"e":1,"l":"Hindi"},{"t":"Akhiyaan Gulaab","f":"Teri Baaton Mein Aisa Uljha Jiya","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=tEBN61umTyg","n":"","w":21324,"e":1,"l":"Hindi"},{"t":"Tu Hi Meri Shab Hai","f":"Gangster","y":2006,"d":3,"v":"https://www.youtube.com/watch?v=QIjFNA8OYAY","n":"","w":20038,"e":1,"l":"Hindi"},{"t":"Humdard","f":"Ek Villain","y":2014,"d":3,"v":"https://www.youtube.com/watch?v=NoDGWIPdHgs","n":"","w":18736,"e":1,"l":"Hindi"},{"t":"Dil Kya Kare","f":"Julie","y":1975,"d":3,"v":"https://www.youtube.com/watch?v=AgvTtya8n6g","n":"","w":18446,"e":1,"l":"Hindi"},{"t":"Pehli Nazar Mein","f":"Race","y":2008,"d":3,"v":"https://www.youtube.com/watch?v=IUIV8FNy87Q","n":"","w":18027,"e":1,"l":"Hindi"},{"t":"Chand Chhupa Badal Mein","f":"Hum Dil De Chuke Sanam","y":1999,"d":3,"v":"https://www.youtube.com/watch?v=w1LFQPcC5XU","n":"","w":17716,"e":1,"l":"Hindi"},{"t":"Tere Bina Zindagi Se Koi","f":"Aandhi","y":1975,"d":3,"v":"https://www.youtube.com/watch?v=YEqKzAYyAoc","n":"https://pixseries.com/tere-bina-zindagi-se-koi-notations/","w":17672,"e":0,"l":"Hindi"},{"t":"Kabhi Na Kabhi","f":"Shaapit","y":2010,"d":3,"v":"https://www.youtube.com/watch?v=pz79DgE3Lp4","n":"","w":17244,"e":1,"l":"Hindi"},{"t":"Galliyan","f":"Ek Villain","y":2014,"d":3,"v":"https://www.youtube.com/watch?v=BUKAYg6nhEY","n":"","w":16738,"e":1,"l":"Hindi"},{"t":"Tumhare Hi Rahenge Hum","f":"Stree 2","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=Ke3y_5pjP5w","n":"","w":16006,"e":1,"l":"Hindi"},{"t":"Inteha Ho Gayi","f":"Sharaabi","y":1984,"d":3,"v":"https://www.youtube.com/watch?v=aQ7Xb1RvSxI","n":"https://pixseries.com/inteha-ho-gayi-notations/","w":15385,"e":0,"l":"Hindi"},{"t":"Aaram Aata Hai (Ik Lamha)","f":"Single (Azaan Sami Khan)","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=6lOwMde-WTI","n":"https://pixseries.com/aaram-aata-hai-ik-lamha-notations/","w":14467,"e":0,"l":"Hindi"},{"t":"Mere Mehboob Mere Sanam","f":"Bad Newz","y":2024,"d":3,"v":"https://www.youtube.com/watch?v=ZnP1JKDlDCE","n":"","w":14262,"e":1,"l":"Hindi"},{"t":"Mehabooba","f":"KGF Chapter 2","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=BXv_3jxbAao","n":"https://pixseries.com/mehbooba-notations/","w":14143,"e":0,"l":"Hindi"},{"t":"Dilbar Mere","f":"Satte Pe Satta","y":1982,"d":3,"v":"https://www.youtube.com/watch?v=2J480QNLSE8","n":"","w":13643,"e":1,"l":"Hindi"},{"t":"Suhana Safar Aur Yeh Mausam Haseen","f":"Madhumati","y":1958,"d":3,"v":"https://www.youtube.com/watch?v=VZlo5LzmKGg","n":"https://pixseries.com/suhana-safar-aur-ye-mausam-notations/","w":12532,"e":0,"l":"Hindi"},{"t":"Besharam Rang","f":"Pathaan","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=UESEPSRHO7U","n":"","w":11169,"e":1,"l":"Hindi"},{"t":"Mann Bharryaa 2.0","f":"Shershaah","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=yO33LaWB9dk","n":"https://pixseries.com/mann-bharya-2-0-notations/","w":9419,"e":0,"l":"Hindi"},{"t":"Pachtaoge","f":"Single (Arijit Singh)","y":2019,"d":3,"v":"https://www.youtube.com/watch?v=kz1KTk0t3l0","n":"https://pixseries.com/pachtaoge-notations/","w":8708,"e":0,"l":"Hindi"},{"t":"Yeh Reshmi Zulfein","f":"Do Raaste","y":1969,"d":3,"v":"https://www.youtube.com/watch?v=e8jtxQjhqnU","n":"","w":7688,"e":1,"l":"Hindi"},{"t":"Tu / You","f":"Single (Armaan Malik)","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=99vRxvge5VY","n":"https://pixseries.com/tu-you-armaan-malik-notations/","w":7618,"e":0,"l":"Hindi"},{"t":"Kyon","f":"Single (B Praak, Payal Dev)","y":2020,"d":3,"v":"https://www.youtube.com/watch?v=_YRI1AXf_L8","n":"","w":7371,"e":1,"l":"Hindi"},{"t":"Daryaa","f":"Manmarziyaan","y":2018,"d":3,"v":"https://www.youtube.com/watch?v=ruTRnYKFdgg","n":"","w":6744,"e":1,"l":"Hindi"},{"t":"Unchi Unchi Wadi","f":"OMG 2","y":2023,"d":3,"v":"https://www.youtube.com/watch?v=EeYeo5fOZ9Q","n":"https://pixseries.com/unchi-unchi-wadi-notations/","w":6333,"e":0,"l":"Hindi"},{"t":"Mitti Di Khushboo","f":"Single (Ayushmann Khurrana)","y":2014,"d":3,"v":"https://www.youtube.com/watch?v=pgvhpRKQd4U","n":"https://pixseries.com/mitti-di-khushboo-notations/","w":6190,"e":0,"l":"Hindi"},{"t":"Tujhko Mirchi Lagi Toh","f":"Coolie No. 1","y":2020,"d":3,"v":"https://www.youtube.com/watch?v=0zIbC4c8cW0","n":"","w":5598,"e":1,"l":"Hindi"},{"t":"Summer High","f":"Single (AP Dhillon)","y":2022,"d":3,"v":"https://www.youtube.com/watch?v=frDbbYa4EjI","n":"","w":4661,"e":1,"l":"Punjabi"},{"t":"Marjaawaan","f":"Bell Bottom","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=hrWuq3obI-c","n":"","w":3206,"e":1,"l":"Hindi"},{"t":"Bewafa (Besharam Bewafa)","f":"Single (B Praak)","y":2020,"d":3,"v":"https://www.youtube.com/watch?v=H2jDceGJ8mE","n":"","w":2866,"e":1,"l":"Hindi"},{"t":"Nain Bengali","f":"Single (Guru Randhawa)","y":2021,"d":3,"v":"https://www.youtube.com/watch?v=Sftoe2M9FtY","n":"","w":2520,"e":1,"l":"Punjabi"},{"t":"Dil Bechara (Title Track)","f":"Dil Bechara","y":2020,"d":3,"v":"https://www.youtube.com/watch?v=wrsSDd_Tjdk","n":"","w":2139,"e":1,"l":"Hindi"},{"t":"Dholida Dhol Re","f":"Garba (folk)","y":"","d":3,"v":"","n":"https://pixseries.com/dholida-dhol-re-piano-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Nav Lakhay Lobadiyu","f":"Garba (folk)","y":"","d":3,"v":"","n":"https://pixseries.com/nav-lakhay-lobadiyu-piano-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Fur Elise","f":"Beethoven","y":1810,"d":3,"v":"","n":"https://pixseries.com/fur-elise-piano-notations/","w":0,"e":1,"l":"Instrumental"},{"t":"Awarapan (Tera Mera Rishta)","f":"Awarapan","y":2007,"d":3,"v":"","n":"https://pixseries.com/awarapan-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Love Story (Indila)","f":"Single (Indila)","y":2014,"d":3,"v":"","n":"https://pixseries.com/love-story-indila-piano-notations/","w":0,"e":0,"l":"French"},{"t":"Tere Liye","f":"","y":"","d":3,"v":"","n":"https://pixseries.com/tere-liye-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Samjhawan","f":"Humpty Sharma Ki Dulhania","y":2014,"d":3,"v":"","n":"https://pixseries.com/samjhawan-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Dhun","f":"","y":"","d":3,"v":"","n":"https://pixseries.com/dhun-piano-notations/","w":0,"e":1,"l":"Hindi"},{"t":"Arz Kiya Hai","f":"Single (Anuv Jain)","y":2024,"d":3,"v":"","n":"https://pixseries.com/arz-kiya-hai-anuv-jain-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Gehra Hua","f":"Dhurandhar","y":2025,"d":3,"v":"","n":"https://pixseries.com/gehra-hua-dhurandhar-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Akhiri Ishq","f":"Dhurandhar 2","y":2026,"d":3,"v":"","n":"https://pixseries.com/phir-se-dhurandhar-the-revenge-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Tum Jo Aaye","f":"Once Upon a Time in Mumbaai","y":2010,"d":3,"v":"","n":"https://pixseries.com/tum-jo-aaye-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Tu Hai Kahan","f":"Single (AUR)","y":2023,"d":3,"v":"","n":"https://pixseries.com/tu-hai-kaha-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Moti Verana","f":"Garba (folk)","y":"","d":3,"v":"","n":"https://pixseries.com/moti-verana-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Waada Karo Nahin Chhodogi","f":"Aa Gale Lag Jaa","y":1973,"d":3,"v":"","n":"https://pixseries.com/waada-karo-nahi-chhodogi-notations/","w":0,"e":0,"l":"Hindi"},{"t":"O Desh Mere","f":"Bhuj","y":2021,"d":3,"v":"","n":"https://pixseries.com/oh-desh-mere-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Yeh Raatein Yeh Mausam","f":"Dilli Ka Thug","y":1958,"d":3,"v":"","n":"https://pixseries.com/yeh-raatein-yeh-mausam-notations/","w":0,"e":0,"l":"Hindi"},{"t":"295","f":"Single (Sidhu Moose Wala)","y":2021,"d":3,"v":"","n":"https://pixseries.com/295-siddhu-moosewala-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Tara Vina Shyam Mane","f":"Garba (folk)","y":"","d":3,"v":"","n":"https://pixseries.com/tara-vina-shyaam-mane-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Chogada Tara","f":"Loveyatri","y":2018,"d":3,"v":"","n":"https://pixseries.com/chogada-tara-notations/","w":0,"e":1,"l":"Gujarati"},{"t":"Sanedo","f":"Garba (folk)","y":"","d":3,"v":"","n":"https://pixseries.com/sanedo-sanedo-notations/","w":0,"e":1,"l":"Gujarati"},{"t":"Dwarika No Nath","f":"Bhajan","y":"","d":3,"v":"","n":"https://pixseries.com/dwarika-no-nath-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Maa Tujhe Salaam","f":"Single (A. R. Rahman, Vande Mataram)","y":1997,"d":3,"v":"","n":"https://pixseries.com/maa-tujhe-salam-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Brown Munde","f":"Single (AP Dhillon)","y":2020,"d":3,"v":"","n":"https://pixseries.com/brown-munde-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Daya Ben (TMKOC tune)","f":"Taarak Mehta Ka Ooltah Chashmah","y":"","d":3,"v":"","n":"https://pixseries.com/daya-ben-notations/","w":0,"e":0,"l":"Instrumental"},{"t":"Bhide Master BGM","f":"Taarak Mehta Ka Ooltah Chashmah","y":"","d":3,"v":"","n":"https://pixseries.com/bhide-master-bgm-notations/","w":0,"e":0,"l":"Instrumental"},{"t":"Kya Mujhe Pyaar Hai","f":"Woh Lamhe","y":2006,"d":3,"v":"","n":"https://pixseries.com/kya-mujhe-pyaar-hai-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Friends Theme","f":"Friends (TV)","y":1994,"d":3,"v":"","n":"https://pixseries.com/friends-theme-notations/","w":0,"e":0,"l":"English"},{"t":"Vhalam Aavo Ne","f":"Love Ni Bhavai","y":2017,"d":3,"v":"","n":"https://pixseries.com/vhalam-aavo-ne-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Harry Potter Theme (Hedwig)","f":"Harry Potter","y":2001,"d":3,"v":"","n":"https://pixseries.com/harry-potter-theme-notations/","w":0,"e":0,"l":"Instrumental"},{"t":"Kali Kali Zulfon Ke","f":"Qawwali (Nusrat Fateh Ali Khan)","y":"","d":3,"v":"","n":"https://pixseries.com/kali-kali-zulfon-ke-notations/","w":0,"e":0,"l":"Urdu"},{"t":"Manike Mage Hithe","f":"Single (Yohani)","y":2021,"d":3,"v":"","n":"https://pixseries.com/manike-mage-hithe-notations/","w":0,"e":0,"l":"Sinhala"},{"t":"Mach Gaya Shor","f":"Khud-Daar","y":1982,"d":3,"v":"","n":"https://pixseries.com/mach-gaya-shor-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Naina Da Kya Kasoor","f":"Andhadhun","y":2018,"d":3,"v":"","n":"https://pixseries.com/naina-da-kya-kasoor-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Dhindora (Title)","f":"Dhindora (web series)","y":2021,"d":3,"v":"","n":"https://pixseries.com/dhindora-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jab Saiyaan","f":"Gangubai Kathiawadi","y":2022,"d":3,"v":"","n":"https://pixseries.com/jab-saiyaan-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Excuses","f":"Single (AP Dhillon)","y":2020,"d":3,"v":"","n":"https://pixseries.com/excuses-notes/","w":0,"e":0,"l":"Punjabi"},{"t":"Agar Tum Saath Ho","f":"Tamasha","y":2015,"d":4,"v":"https://www.youtube.com/watch?v=Y8c0nnW8rUw","n":"https://pixseries.com/agar-tum-sath-ho-notations/","w":202186,"e":0,"l":"Hindi"},{"t":"Pehla Nasha","f":"Jo Jeeta Wohi Sikandar","y":1992,"d":4,"v":"https://www.youtube.com/watch?v=VWE1CHe60a0","n":"https://pixseries.com/pehla-nasha-notations/","w":126271,"e":0,"l":"Hindi"},{"t":"Aashiqui 2 Theme","f":"Aashiqui 2","y":2013,"d":4,"v":"https://www.youtube.com/watch?v=A1IR38yKcb0","n":"https://pixseries.com/aashiqui-2-theme-notations/","w":101660,"e":0,"l":"Instrumental"},{"t":"Ye Tune Kya Kiya","f":"Once Upon a Time in Mumbai Dobaara","y":2013,"d":4,"v":"https://www.youtube.com/watch?v=FrSrIw0Oyw0","n":"https://pixseries.com/ye-tune-kya-kiya-notations/","w":95739,"e":0,"l":"Hindi"},{"t":"Kaise Hua","f":"Kabir Singh","y":2019,"d":4,"v":"https://www.youtube.com/watch?v=jms7mrMghmA","n":"https://pixseries.com/kaise-hua-kabir-singh-notations/","w":90783,"e":0,"l":"Hindi"},{"t":"Ek Pyar Ka Nagma Hai","f":"Shor","y":1972,"d":4,"v":"https://www.youtube.com/watch?v=hrGxg7x0rvE","n":"https://pixseries.com/ek-pyaar-ka-nagma-hai-notations/","w":77594,"e":0,"l":"Hindi"},{"t":"Ve Kamleya","f":"Rocky Aur Rani Kii Prem Kahaani","y":2023,"d":4,"v":"https://www.youtube.com/watch?v=Hp5UFqc6U10","n":"","w":55142,"e":1,"l":"Hindi"},{"t":"Teri Deewani","f":"Single (Kailash Kher)","y":2006,"d":4,"v":"https://www.youtube.com/watch?v=2jhd98V2lF8","n":"","w":51895,"e":1,"l":"Hindi"},{"t":"Saiyaara","f":"Saiyaara","y":2025,"d":4,"v":"https://www.youtube.com/watch?v=OMzFWqZ36Ew","n":"","w":50556,"e":1,"l":"Hindi"},{"t":"Param Sundari","f":"Mimi","y":2021,"d":4,"v":"https://www.youtube.com/watch?v=cE_zpvYu1zQ","n":"https://pixseries.com/param-sundari-notations/","w":49198,"e":0,"l":"Hindi"},{"t":"Tumse Milke Dil Ka Hai Jo Haal","f":"Main Hoon Na","y":2004,"d":4,"v":"https://www.youtube.com/watch?v=Y3HQ-eIkQwg","n":"https://pixseries.com/tumse-milke-dil-ka-hai-jo-notations/","w":46692,"e":0,"l":"Hindi"},{"t":"Shayad","f":"Love Aaj Kal","y":2020,"d":4,"v":"https://www.youtube.com/watch?v=muIqW6gRwBE","n":"https://pixseries.com/shayad-notaions/","w":43955,"e":0,"l":"Hindi"},{"t":"Mere Rang Mein Rangne Wali","f":"Maine Pyar Kiya","y":1989,"d":4,"v":"https://www.youtube.com/watch?v=kdDVaMbQImY","n":"https://pixseries.com/mere-rang-me-notations/","w":40286,"e":0,"l":"Hindi"},{"t":"Saiyyan","f":"Single (Kailash Kher)","y":2007,"d":4,"v":"https://www.youtube.com/watch?v=tftxFHWKy4M","n":"https://pixseries.com/saiyaan-kailash-kher-notations/","w":34253,"e":0,"l":"Hindi"},{"t":"Ranjha","f":"Shershaah","y":2021,"d":4,"v":"https://www.youtube.com/watch?v=_B9-J_LVuMw","n":"https://pixseries.com/ranjha-notations/","w":33334,"e":0,"l":"Hindi"},{"t":"Kabira (Encore)","f":"Yeh Jawaani Hai Deewani","y":2013,"d":4,"v":"https://www.youtube.com/watch?v=A31otEj5nFE","n":"","w":31443,"e":1,"l":"Hindi"},{"t":"Zara Zara","f":"Rehnaa Hai Terre Dil Mein","y":2001,"d":4,"v":"https://www.youtube.com/watch?v=fR3kGffLETs","n":"https://pixseries.com/zara-zara-notations/","w":29358,"e":0,"l":"Hindi"},{"t":"Phir Se","f":"Dhurandhar 2","y":2026,"d":4,"v":"https://www.youtube.com/watch?v=0QHXttxjUII","n":"https://pixseries.com/phir-se-dhurandhar-the-revenge/","w":27697,"e":0,"l":"Hindi"},{"t":"Kaho Na Kaho","f":"Murder","y":2004,"d":4,"v":"https://www.youtube.com/watch?v=tHD_CR-OFY0","n":"","w":26358,"e":1,"l":"Hindi"},{"t":"Kabhi Kabhi Mere Dil Mein","f":"Kabhi Kabhie","y":1976,"d":4,"v":"https://www.youtube.com/watch?v=WORa2pczsu0","n":"https://pixseries.com/kabhi-kabhi-mere-dil-me-notations/","w":25825,"e":0,"l":"Hindi"},{"t":"Phir Aur Kya Chahiye","f":"Zara Hatke Zara Bachke","y":2023,"d":4,"v":"https://www.youtube.com/watch?v=z32KOilej_s","n":"https://pixseries.com/phir-aur-kya-chahiye-notations/","w":24270,"e":0,"l":"Hindi"},{"t":"Piya Ghar Aavenge","f":"Single (Kailash Kher)","y":2007,"d":4,"v":"https://www.youtube.com/watch?v=4nLxncsTFsI","n":"","w":23820,"e":1,"l":"Hindi"},{"t":"Dilbar","f":"Satyameva Jayate","y":2018,"d":4,"v":"https://www.youtube.com/watch?v=ew_yAbeDefA","n":"","w":20890,"e":1,"l":"Hindi"},{"t":"Naina","f":"Crew","y":2024,"d":4,"v":"https://www.youtube.com/watch?v=vx_I6drSYu4","n":"","w":16802,"e":1,"l":"Hindi"},{"t":"Tera Ban Jaunga","f":"Kabir Singh","y":2019,"d":4,"v":"https://www.youtube.com/watch?v=_tynLPscdD4","n":"https://pixseries.com/jai-shri-ram-notations/","w":16580,"e":0,"l":"Hindi"},{"t":"Perfect","f":"Single (Ed Sheeran)","y":2017,"d":4,"v":"https://www.youtube.com/watch?v=K0FAziiNsiQ","n":"https://pixseries.com/perfect-ed-sheeran-notations/","w":13910,"e":0,"l":"English"},{"t":"Mor Bani Thanghat Kare","f":"Goliyon Ki Raasleela Ram-Leela","y":2013,"d":4,"v":"https://www.youtube.com/watch?v=xri8DN4iUeo","n":"","w":10648,"e":1,"l":"Gujarati"},{"t":"Jug Jug Jeeve","f":"Shiddat","y":2021,"d":4,"v":"https://www.youtube.com/watch?v=NnPhmLKbd4M","n":"https://pixseries.com/jug-jug-jeeve-notations/","w":10021,"e":0,"l":"Hindi"},{"t":"Barsaat Ki Dhun","f":"Single (Jubin Nautiyal)","y":2021,"d":4,"v":"https://www.youtube.com/watch?v=EM7e8tDOkCc","n":"https://pixseries.com/barsaat-ki-dhun-notations/","w":5818,"e":0,"l":"Hindi"},{"t":"Sarkari","f":"Single (Punjabi)","y":"","d":4,"v":"","n":"https://pixseries.com/sarkari-piano-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Ganga Ke Kinare","f":"","y":"","d":4,"v":"","n":"https://pixseries.com/ganga-ke-kinare-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Har Kisi Ko","f":"Boss","y":2013,"d":4,"v":"","n":"https://pixseries.com/har-kisi-ko-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Sitaare","f":"","y":"","d":4,"v":"","n":"https://pixseries.com/sitaare-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Darkhaast","f":"Shivaay","y":2016,"d":4,"v":"","n":"https://pixseries.com/darkhast-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Sahiba","f":"Single (Aditya Rikhari)","y":2024,"d":4,"v":"","n":"https://pixseries.com/sahiba/","w":0,"e":0,"l":"Hindi"},{"t":"Khat","f":"Single (Navjot Ahuja)","y":2021,"d":4,"v":"","n":"https://pixseries.com/khat-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Dooron Dooron","f":"Single (Paresh Pahuja)","y":2024,"d":4,"v":"","n":"https://pixseries.com/dorron-dorron-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Pehle Bhi Main","f":"Animal","y":2023,"d":4,"v":"","n":"https://pixseries.com/pehle-bhi-main-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Om Gan Ganpataye","f":"Bhajan","y":"","d":4,"v":"","n":"https://pixseries.com/om-gan-ganpataye-notations/","w":0,"e":0,"l":"Sanskrit"},{"t":"Jai Ganesh Jai Ganesh Deva","f":"Aarti","y":"","d":4,"v":"","n":"https://pixseries.com/jai-ganesh-jai-ganesh-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Sapna Jahan","f":"Brothers","y":2015,"d":4,"v":"","n":"https://pixseries.com/sapna-jahan-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Radha Ne Shyam Mali Jashe","f":"Garba (folk)","y":"","d":4,"v":"","n":"https://pixseries.com/radhe-ne-shyaam-mali-jashe-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Jana Gana Mana","f":"National Anthem","y":"","d":4,"v":"","n":"https://pixseries.com/jan-gan-man-notations/","w":0,"e":0,"l":"Bengali/Sanskrit"},{"t":"Hori Khele Raghuveera","f":"Baghban","y":2003,"d":4,"v":"","n":"https://pixseries.com/hori-khele-raghuveera-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Baarish Ki Jaaye","f":"Single (B Praak)","y":2021,"d":4,"v":"","n":"https://pixseries.com/barish-ki-jaaye-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Butter","f":"Single (BTS)","y":2021,"d":4,"v":"","n":"https://pixseries.com/butter-bts-notations/","w":0,"e":0,"l":"English"},{"t":"Gori Radha Ne Kalo Kaan","f":"Garba (folk)","y":"","d":4,"v":"","n":"https://pixseries.com/gori-radha-ne-kalo-kaan-notations/","w":0,"e":0,"l":"Gujarati"},{"t":"Doobey","f":"Gehraiyaan","y":2022,"d":4,"v":"","n":"https://pixseries.com/doobey-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jugnu","f":"Single (Badshah)","y":2021,"d":4,"v":"","n":"https://pixseries.com/jugnu-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Sandese Aate Hai","f":"Border","y":1997,"d":4,"v":"","n":"https://pixseries.com/sandeshe-aate-hai-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Balam Pichkari","f":"Yeh Jawaani Hai Deewani","y":2013,"d":4,"v":"","n":"https://pixseries.com/balam-pichkari-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Tujhse Naraz Nahi Zindagi","f":"Masoom","y":1983,"d":4,"v":"","n":"https://pixseries.com/tujhse-naraz-nahi-zindagi-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Pasoori","f":"Coke Studio Pakistan","y":2022,"d":5,"v":"https://www.youtube.com/watch?v=8AR_6JaFfTo","n":"https://pixseries.com/pasoori-notations/","w":217900,"e":0,"l":"Punjabi/Urdu"},{"t":"Ae Dil Hai Mushkil","f":"Ae Dil Hai Mushkil","y":2016,"d":5,"v":"https://www.youtube.com/watch?v=8gmODpvPXcg","n":"https://pixseries.com/ae-dil-hai-mushkil-notations/","w":92602,"e":0,"l":"Hindi"},{"t":"Kahani Suno 2.0","f":"Single (Kaifi Khalil)","y":2022,"d":5,"v":"https://www.youtube.com/watch?v=SeXzBJ6-6lM","n":"https://pixseries.com/kahani-suno-2-0-notations/","w":80051,"e":0,"l":"Urdu/Hindi"},{"t":"Pal Pal Dil Ke Paas","f":"Blackmail","y":1973,"d":5,"v":"https://www.youtube.com/watch?v=Q2u4Pn475no","n":"https://pixseries.com/pal-pal-dil-ke-pass-piano-notations/","w":58946,"e":0,"l":"Hindi"},{"t":"Tujhe Kitna Chahne Lage","f":"Kabir Singh","y":2019,"d":5,"v":"https://www.youtube.com/watch?v=e_SUGcpii5A","n":"https://pixseries.com/tujhe-kitna-chahne-lage-hum-notations/","w":46062,"e":0,"l":"Hindi"},{"t":"Ram Siya Ram","f":"Adipurush","y":2023,"d":5,"v":"https://www.youtube.com/watch?v=ovkyAfR4Oi0","n":"https://pixseries.com/ram-siya-notations/","w":44157,"e":0,"l":"Hindi"},{"t":"Mere Mehbooba Qayamat Hogi","f":"Mr. X in Bombay","y":1964,"d":5,"v":"https://www.youtube.com/watch?v=Zl2y1g8KdZo","n":"https://pixseries.com/mere-mehboob-notations/","w":30318,"e":0,"l":"Hindi"},{"t":"Deewaana Deewaana","f":"Tere Ishk Mein","y":2025,"d":5,"v":"https://www.youtube.com/watch?v=CNxTKogE460","n":"https://pixseries.com/deewaana-deewaana-tere-ishq-main-notations/","w":27936,"e":0,"l":"Hindi"},{"t":"Chura Ke Dil Mera","f":"Main Khiladi Tu Anari","y":1994,"d":5,"v":"https://www.youtube.com/watch?v=TaAVa8-9Jyo","n":"https://pixseries.com/chura-ke-dil-mera-notations/","w":25984,"e":0,"l":"Hindi"},{"t":"Ekadantaya Vakratundaya","f":"Devotional (Shankar Mahadevan)","y":"","d":5,"v":"","n":"https://pixseries.com/ekadantaya-vakratundaya-piano-notations/","w":0,"e":0,"l":"Sanskrit"},{"t":"Pehli Dafa","f":"Single (Atif Aslam)","y":2017,"d":5,"v":"","n":"https://pixseries.com/pehli-dafa-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Jawani Janeman","f":"Namak Halaal","y":1982,"d":5,"v":"","n":"https://pixseries.com/jawani-janeman-piano-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Boyfriend","f":"Single (Karan Aujla)","y":2024,"d":5,"v":"","n":"https://pixseries.com/boyfriend-karan-aujla-notations/","w":0,"e":0,"l":"Punjabi"},{"t":"Dil Ka Jo Haal Hai","f":"Besharam","y":2013,"d":5,"v":"","n":"https://pixseries.com/dil-ka-jo-haal-hai-besharam-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Kun Faya Kun","f":"Rockstar","y":2011,"d":5,"v":"","n":"https://pixseries.com/kun-faya-kun-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Alag Aasmaan","f":"Single (Anuv Jain)","y":2020,"d":5,"v":"","n":"https://pixseries.com/alag-aasman-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Saare Jahan Se Achha","f":"Patriotic","y":"","d":5,"v":"","n":"https://pixseries.com/saare-jahan-se-accha-notations/","w":0,"e":0,"l":"Hindi"},{"t":"Dil Diya Hai Jaan Bhi Denge","f":"Karma","y":1986,"d":5,"v":"","n":"https://pixseries.com/dil-diya-hai-jaan-bhi-denge-piano/","w":0,"e":0,"l":"Hindi"}];
+const TIER_LABELS=["First songs: white keys, small range, slow", "Easy: few black keys or a bit wider range", "Intermediate: several black keys, moderate runs", "Hard: many black keys, wide range or fast runs", "Advanced: black-key heavy, wide range, fast"];
+/* =========================================================
+   3. State
+   ========================================================= */
+const KEY='pianoCoach.v1';
+const defaultState={onboarded:false,unlocked:1,days:{},practice:[],settings:{notation:'both',sens:3,theme:'auto',pass:80},best:{}};
+let S=load();
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v)return Object.assign({},defaultState,v,{settings:Object.assign({},defaultState.settings,v.settings||{})})}catch(e){}return JSON.parse(JSON.stringify(defaultState))}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function logPractice(){const k=todayKey();if(!S.practice.includes(k)){S.practice.push(k);save()}}
+function streak(){let c=0;const d=new Date();if(!S.practice.includes(todayKey()))d.setDate(d.getDate()-1);
+  for(;;){const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(S.practice.includes(k)){c++;d.setDate(d.getDate()-1)}else break}return c}
+function applyTheme(){const t=S.settings.theme;if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)}
+applyTheme();
+
+/* =========================================================
+   4. Audio: synth, metronome
+   ========================================================= */
+const SYNTH_MIC=new URLSearchParams(location.search).get('mic')==='synth';
+let AC=null,analyser=null,micStream=null,synthBus=null;
+function ac(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();synthBus=AC.createGain();synthBus.connect(AC.destination)}if(AC.state==='suspended')AC.resume();return AC}
+function pluck(m,when,dur,vol=.28){const c=ac();const f=midiToFreq(m);const g=c.createGain();g.connect(synthBus);
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vol,when+.008);g.gain.exponentialRampToValueAtTime(vol*.35,when+.25);g.gain.exponentialRampToValueAtTime(.0008,when+Math.max(.5,dur)+.6);
+  [[1,1],[2,.45],[3,.22],[4,.1]].forEach(([h,a])=>{const o=c.createOscillator();o.type='sine';o.frequency.value=f*h;const og=c.createGain();og.gain.value=a;o.connect(og);og.connect(g);o.start(when);o.stop(when+dur+1.3)})}
+function chime(){const c=ac();[72,79].forEach((m,i)=>pluck(m,c.currentTime+i*.18,.6,.12))}
+function click(when,accent){const c=ac();const o=c.createOscillator();const g=c.createGain();o.frequency.value=accent?1500:1000;g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(.4,when+.002);g.gain.exponentialRampToValueAtTime(.0001,when+.05);o.connect(g);g.connect(AC.destination);o.start(when);o.stop(when+.06)}
+
+/* =========================================================
+   5. Pitch detection (McLeod Pitch Method) + listener + wait mode
+   ========================================================= */
+function mpm(x,sr,minF=60,maxF=2200,k=.9){const N=x.length;const maxLag=Math.min(N-1,Math.floor(sr/minF));const minLag=Math.max(2,Math.floor(sr/maxF));const nsdf=new Float32Array(maxLag+2);
+  for(let tau=0;tau<=maxLag+1;tau++){let acf=0,m=0;for(let j=0;j<N-tau;j++){acf+=x[j]*x[j+tau];m+=x[j]*x[j]+x[j+tau]*x[j+tau]}nsdf[tau]=m>0?2*acf/m:0}
+  const peaks=[];let tau=1;while(tau<maxLag&&nsdf[tau]>0)tau++;
+  while(tau<maxLag){while(tau<maxLag&&nsdf[tau]<=0)tau++;let best=-1,bt=-1;while(tau<maxLag&&nsdf[tau]>0){if(nsdf[tau]>best){best=nsdf[tau];bt=tau}tau++}if(bt>=minLag)peaks.push(bt)}
+  if(!peaks.length)return null;let top=0;for(const p of peaks)top=Math.max(top,nsdf[p]);const p=peaks.find(p=>nsdf[p]>=k*top);
+  const a=nsdf[p-1],b=nsdf[p],c=nsdf[p+1];const den=a-2*b+c;const sh=den!==0?.5*(a-c)/den:0;return {freq:sr/(p+sh),clarity:Math.min(1,b-.25*(a-c)*sh)}}
+function rmsOf(x){let s=0;for(let i=0;i<x.length;i++)s+=x[i]*x[i];return Math.sqrt(s/x.length)}
+
+const Ear={on:false,buf:null,noise:.003,env:0,envMin:1,armed:true,handlers:new Set(),muteUntil:0,last:null,frame:0};
+async function openMic(){
+  const c=ac();
+  if(analyser)return true;
+  analyser=c.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0;Ear.buf=new Float32Array(analyser.fftSize);
+  if(SYNTH_MIC){synthBus.connect(analyser);return true}
+  try{micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1}})}
+  catch(e){analyser=null;return false}
+  c.createMediaStreamSource(micStream).connect(analyser);return true}
+async function calibrate(ms=900){const samples=[];const end=performance.now()+ms;while(performance.now()<end){analyser.getFloatTimeDomainData(Ear.buf);samples.push(rmsOf(Ear.buf));await new Promise(r=>setTimeout(r,30))}
+  samples.sort((a,b)=>a-b);Ear.noise=Math.max(SYNTH_MIC?.0005:.002,samples[Math.floor(samples.length*.9)]||.002);return Ear.noise}
+function earStart(){if(Ear.on)return;Ear.on=true;requestAnimationFrame(earTick)}
+function earStop(){Ear.on=false}
+function earTick(){if(!Ear.on)return;requestAnimationFrame(earTick);if((Ear.frame++)%2)return; // ~30fps
+  analyser.getFloatTimeDomainData(Ear.buf);const level=rmsOf(Ear.buf);const gate=Ear.noise*S.settings.sens;
+  Ear.env=.6*Ear.env+.4*level;Ear.envMin=Math.min(Ear.envMin*1.02+1e-5,Ear.env);let onset=false;
+  if(Ear.armed&&Ear.env>gate&&Ear.env>Ear.envMin*1.8){onset=true;Ear.armed=false}
+  if(!Ear.armed&&Ear.env<Ear.envMin*1.2+gate*.5)Ear.armed=true;if(onset)Ear.envMin=Ear.env;
+  let midi=null,freq=0;const muted=!SYNTH_MIC&&performance.now()<Ear.muteUntil;
+  if(level>gate&&!muted){const r=mpm(Ear.buf,AC.sampleRate);if(r&&r.clarity>.8){freq=r.freq;midi=Math.round(69+12*Math.log2(freq/440))}}
+  const f={t:performance.now(),rms:level,gate,midi,freq,onset:onset&&!muted};Ear.last=f;Ear.handlers.forEach(h=>h(f))}
+
+function createWaitMode(targets,ui,start=0){const holdMs=110,wrongHoldMs=160;
+  const s={i:start,wrong:0,wrongAt:targets.map(()=>0),cand:null,candSince:0,strike:0,used:-1,wrongCounted:-1};
+  const matches=(h,w)=>h===w||(w<60&&Math.abs(h-w)===12);
+  function onFrame(f){if(s.i>=targets.length)return;if(f.onset)s.strike++;if(f.midi==null){s.cand=null;return}
+    if(f.midi!==s.cand){s.cand=f.midi;s.candSince=f.t}const held=f.t-s.candSince;const want=targets[s.i];
+    if(matches(s.cand,want)){if(held>=holdMs&&s.used!==s.strike){s.used=s.strike;ui.correct(s.i);s.i++;if(s.i<targets.length)ui.next(s.i);else ui.done(summary())}}
+    else if(held>=wrongHoldMs&&s.wrongCounted!==s.strike&&s.used!==s.strike){s.wrongCounted=s.strike;s.wrong++;s.wrongAt[s.i]++;ui.wrong(s.cand,want,s.i)}}
+  function summary(){const n=targets.length;return {notes:n,wrong:s.wrong,accuracy:Math.round(100*n/(n+s.wrong)),wrongAt:s.wrongAt}}
+  function skip(){if(s.i>=targets.length)return;s.wrong++;s.wrongAt[s.i]++;s.used=s.strike;ui.correct(s.i,true);s.i++;if(s.i<targets.length)ui.next(s.i);else ui.done(summary())}
+  return {onFrame,summary,skip,state:s}}
+
+/* =========================================================
+   6. UI helpers
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
+const ICON={
+  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+  songs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>',
+  yt:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg>',
+  x:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+function noteLabel(m){const n=S.settings.notation;const L=letterOf(m),G=sargamOf(m);if(n==='letters')return {big:L,small:''};if(n==='sargam')return {big:G,small:''};return {big:L,small:G}}
+
+function keyboardHTML(lo,hi){
+  // snap to C..B range
+  lo=lo-((lo%12+12)%12);hi=hi+(11-((hi%12+12)%12));
+  let whites=[],blacks=[];let wi=0;
+  for(let m=lo;m<=hi;m++){if(isBlack(m)){blacks.push({m,wi})}else{whites.push(m);wi++}}
+  const n=S.settings.notation;
+  const w=whites.map(m=>{const lab=n==='sargam'?`<b>${sargamOf(m)}</b>`:n==='letters'?`<b>${letterOf(m)}</b>`:`<b>${letterOf(m)}</b><span>${sargamOf(m)}</span>`;return `<div class="kw${m===60?' mc':''}" data-m="${m}">${lab}</div>`}).join('');
+  const b=blacks.map(({m,wi})=>`<div class="kb_" data-m="${m}" style="left:calc(var(--kw,44px)*${wi} - var(--kw,44px)*.31 - ${wi>0?0:0}px)"></div>`).join('');
+  return `<div class="kbwrap"><div class="kb">${w}${b}</div></div>`}
+function keyEl(root,m){return root.querySelector(`[data-m="${m}"]`)}
+function flashKey(root,m,cls,ms=380){const k=keyEl(root,m);if(!k)return;k.classList.add(cls);setTimeout(()=>k.classList.remove(cls),ms)}
+
+/* =========================================================
+   7. Views
+   ========================================================= */
+let view='today',openDay=null,planOpen=null,songOpen=null;
+function render(){
+  const r=$('#root');
+  if(!S.onboarded){r.innerHTML=onboardHTML();bindOnboard();return}
+  let body='';
+  if(view==='today')body=todayHTML();else if(view==='plan')body=planHTML();else if(view==='songs')body=songsHTML();else body=micHTML();
+  r.innerHTML=`<div class="app">${body}</div>${tabsHTML()}`;
+  bindView();
+}
+function tabsHTML(){const t=(id,l)=>`<button class="tab${view===id?' on':''}" data-tab="${id}">${ICON[id]}${l}</button>`;
+  return `<nav class="tabs no-print"><div class="tabs-inner">${t('today','Today')}${t('plan','Plan')}${t('songs','Songs')}${t('mic','Setup')}</div></nav>`}
+
+function currentDayNum(){return Math.min(90,S.unlocked)}
+const IC={
+  fire:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5 5.6 5 10.5A5 5 0 0 1 12 18a5 5 0 0 1-5-5.2c0-2 1-3.4 2-4.3.2 1.5 1 2.5 2 2.8C10.6 8.5 11 5 12 2z"/><path d="M12 22a7 7 0 0 1-7-7h2a5 5 0 0 0 10 0h2a7 7 0 0 1-7 7z" opacity=".35"/></svg>',
+  gem:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10l4 6-9 12L3 9z"/><path d="M3 9h18M9 3l3 6 3-6M12 9v12" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="16" rx="4"/><rect x="7" y="2" width="2.5" height="5" rx="1.2"/><rect x="14.5" y="2" width="2.5" height="5" rx="1.2"/><rect x="6" y="11" width="12" height="2.4" rx="1.2" fill="#fff" opacity=".5"/></svg>',
+  note:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 17.5V5l11-2v12.5a3 3 0 1 1-2-2.8V7.3l-7 1.3v8.9a3 3 0 1 1-2-2.8z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10v6a5 5 0 0 1-10 0z"/><path d="M5 5H2v2a4 4 0 0 0 4 4M19 5h3v2a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="2" fill="none"/><rect x="10.5" y="13" width="3" height="5"/><rect x="7" y="18" width="10" height="3" rx="1.5"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 5v16M8 7h7"/></svg>',
+  keys:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="16" rx="3" opacity=".3"/><rect x="5" y="4" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="9" rx="1"/><rect x="16" y="4" width="3" height="9" rx="1"/></svg>',
+};
+const UNIT_COLORS=[['#8B6CFF','#6B4DE0'],['#3BA8FF','#1F86DB'],['#1FBF86','#16A06F'],['#FF7A45','#DE5A26'],['#FF4D9A','#D9327A'],['#FFB020','#D98E00']];
+const BLOCK_COLORS={'Warm-up':'#FFB020','Technique':'#8B6CFF','Scales and chords':'#3BA8FF','Rhythm':'#FF4D9A','Review':'#1FBF86'};
+const blockColor=b=>BLOCK_COLORS[b.title]||(b.gate?'#FF7A45':'#3BA8FF');
+const ukey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function statBar(){return `<div class="statbar"><div class="stati day">${IC.cal}<span>Day ${Math.min(90,S.unlocked)}</span></div><div class="stati fire">${IC.fire}<span>${streak()}</span></div><div class="stati xp">${IC.gem}<span>${S.xp||0} XP</span></div></div>`}
+function unitBanner(wi,withBtn){const w=WEEKS[wi];const [c,d]=UNIT_COLORS[wi%UNIT_COLORS.length];
+  return `<div class="unit" style="background:${c};box-shadow:0 4px 0 ${d}"><div style="flex:1;min-width:0"><div class="eyebrow">Week ${wi+1} of 13</div><h2>${esc(w.theme)}</h2><p>${esc(w.goal)}</p></div>${withBtn?`<button class="ubtn" data-tab="plan" aria-label="Open the plan">${IC.book}</button>`:''}</div>`}
+function nodeIcon(d){if(d.milestone)return IC.trophy;if(d.d===7)return IC.star;return IC.note}
+
+function todayHTML(){
+  const n=currentDayNum();const day=DAYS[n-1];const allDone=S.days[90]&&S.days[90].passed;
+  const passedToday=Object.entries(S.days).filter(([k,v])=>v.passed&&v.date===todayKey()).map(([k])=>+k);
+  const lastDone=passedToday.length?passedToday[passedToday.length-1]:0;
+  const wi=day.week-1;const weekDays=DAYS.filter(d=>d.week===day.week);
+  const offs=[0,48,72,48,0,-48,-72];
+  const nodes=weekDays.map((d,i)=>{const st=S.days[d.n];const done=st&&st.passed;const cur=d.n===n&&!allDone;const locked=d.n>S.unlocked;
+    return `<div style="transform:translateX(${offs[i%7]}px)"><button class="node ${done?'done':cur?'cur':'locked'}" data-node="${d.n}" aria-label="Day ${d.n}">${cur&&!(lastDone&&lastDone!==n)?'<span class="bubble">START</span>':''}${done?IC.check:locked?(d.milestone?IC.trophy:IC.lock):nodeIcon(d)}<span class="lbl">Day ${d.n}</span></button></div>`}).join('');
+  const dows=['M','T','W','T','F','S','S'];const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  const week=dows.map((l,i)=>{const dd=new Date(mon);dd.setDate(mon.getDate()+i);const k=ukey(dd);return `<div class="wd${S.practice.includes(k)?' done':''}${k===todayKey()?' today':''}"><b>${IC.check.replace('stroke-width="3.5"','stroke-width="4" width="16" height="16"')}</b>${l}</div>`}).join('');
+  const resumable=S.days[n]&&S.days[n].session&&S.days[n].session.date===todayKey();
+  const early=lastDone&&lastDone!==n;
+  const startLabel=resumable?`Continue Day ${n}`:early?`Start Day ${n} early`:`Start Day ${n}`;
+  const blocks=day.blocks.map((b,i)=>`<li><span class="bn" style="background:${blockColor(b)}">${i+1}</span><span class="bt"><b>${esc(b.title)} ${b.gate?'<span class="gate-tag">Test</span>':''}</b><span>${esc(blockSub(b))}</span></span><span class="bm">${b.minutes}m</span></li>`).join('');
+  const doneCard=early?`<section class="card pad row" style="margin-top:16px;border-color:var(--ok);background:var(--ok-soft)"><div class="bn" style="background:var(--ok);width:48px;height:48px">${IC.check.replace('<svg','<svg width="26" height="26"')}</div><div style="flex:1"><h2>Done for today</h2><div class="small muted">Day ${lastDone} passed with ${S.days[lastDone].best}%. Rest is part of practice.</div></div></section>`:'';
+  return `${statBar()}${unitBanner(wi,true)}
+  ${doneCard}
+  <div class="path">${nodes}</div>
+  <section class="card pad" style="margin-top:20px">
+    <div class="row" style="align-items:flex-start"><div style="flex:1"><div class="eyebrow">Day ${n} · ${day.minutes} minutes</div><h2 style="font-size:22px;font-weight:800;margin-top:4px">${esc(day.title)}</h2></div></div>
+    <ul class="blocks" style="margin-top:8px">${blocks}</ul>
+    ${day.video?`<a class="vlink" style="margin-top:12px" href="${day.video.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(day.video.t)}</span></a>`:''}
+    <p class="tiny" style="margin-top:8px">Pass the test with ${S.settings.pass}% to unlock Day ${Math.min(90,n+1)}.</p>
+  </section>
+  <section class="card pad stack" style="margin-top:16px"><div class="row"><h2 style="flex:1">This week</h2><span class="tiny">${S.practice.length} days practised</span></div><div class="week">${week}</div></section>
+  ${!allDone?`<div class="startbar no-print"><button class="btn ${early?'btn-line':'btn-accent'} btn-block" data-start="${n}">${startLabel}</button></div>`:''}`;
+}
+function blockSub(b){if(b.type==='ex'){return b.ex.t+(b.ex.part&&b.ex.part!=='full'?', '+b.ex.part:'')}if(b.type==='rhythm')return `Metronome ${b.rhythm.bpm} bpm, ${b.rhythm.beats} beats`;return b.items?b.items[0]:''}
+
+function planHTML(){
+  let html=`${statBar()}<header class="stack"><h1>The 90-day course</h1><p class="muted">One 30-minute class a day. Each day opens when you pass the one before. Tap a day to see exactly what to practise.</p>
+  <button class="btn btn-line btn-sm no-print" id="printPlan">Print the plan</button></header>`;
+  WEEKS.forEach((w,wi)=>{const days=DAYS.filter(d=>d.week===wi+1);if(!days.length)return;
+    html+=`<section class="wk">${unitBanner(wi,false)}`;
+    days.forEach(d=>{const st=S.days[d.n];const locked=d.n>S.unlocked;const cur=d.n===S.unlocked;const done=st&&st.passed;
+      const stat=done?`<span class="pill ok">${st.best}%</span>`:cur?`<span class="pill accent">Today</span>`:locked?`<span class="dstat" style="color:var(--ink-3)">${IC.lock.replace('<svg','<svg width="18" height="18"')}</span>`:'';
+      html+=`<button class="dayrow${locked?' locked':''}${cur?' cur':''}${done?' done':''}" data-day="${d.n}"><span class="dnum">${d.n}</span><span style="flex:1;min-width:0"><b style="font-weight:700;font-size:16px">${esc(d.title)}</b><span class="tiny" style="display:block">${d.minutes} min${d.milestone?' · milestone test':''}</span></span>${stat}</button>`;
+      if(planOpen===d.n){html+=`<div class="daydetail"><ol>${d.blocks.map(b=>`<li><b>${esc(b.title)}</b> (${b.minutes} min): ${b.type==='self'?esc(b.items.join(' ')):esc(blockSub(b))+(b.items&&b.items.length?'. '+esc(b.items.join(' ')):'')}</li>`).join('')}</ol>
+        ${!locked?`<button class="btn btn-accent btn-sm no-print" style="margin-top:10px" data-start="${d.n}">${done?'Redo':'Start'} Day ${d.n}</button>`:`<p class="tiny" style="margin-top:8px">Finish Day ${S.unlocked} to get here.</p>`}</div>`}
+    });html+='</section>'});
+  return html}
+
+const TIER_COLORS=['#1FBF86','#3BA8FF','#8B6CFF','#FF7A45','#FF4D6D'];
+const TIER_DAY=[22,36,57,78,91];
+let songTier=0,songQuery='';
+function songsHTML(){
+  const practice=Object.keys(SONGS).sort((a,b)=>SONG_UNLOCK[a]-SONG_UNLOCK[b]);
+  let html=`${statBar()}<header class="stack"><h1>Songs</h1><p class="muted">Practice songs check every note with the mic. The library has ${CATALOG.length} songs from PIX Series, sorted by difficulty and popularity, each with its video tutorial and notation.</p></header>
+  <h2 style="margin-top:20px">Practise with the mic</h2><div class="card pad" style="margin-top:10px;padding-top:6px;padding-bottom:6px">`;
+  practice.forEach(id=>{const s=SONGS[id];const open=SONG_UNLOCK[id]<=S.unlocked;const best=S.best['song:'+id];
+    html+=`<button class="songrow" style="${open?'':'opacity:.5'}" data-song="${open?id:''}"><span class="tier" style="background:${open?'var(--accent)':'var(--ink-3)'}">${open?IC.note.replace('<svg','<svg width="18" height="18"'):IC.lock.replace('<svg','<svg width="16" height="16"')}</span><span style="flex:1;min-width:0"><b style="font-weight:700">${esc(s.t)}</b><span class="tiny" style="display:block">${s.lines.length} line${s.lines.length>1?'s':''} · ${s.bpm} bpm${s.film?' · from fan notation, check by ear':''}</span></span>${open?(best!=null?`<span class="pill ok">${best}%</span>`:'<span class="pill sky">Play</span>'):`<span class="pill">Day ${SONG_UNLOCK[id]}</span>`}</button>`});
+  html+=`</div><h2 style="margin-top:28px">Song library</h2><p class="tiny" style="margin-top:4px">Learn these from PIX Series videos and notation, in Sa = original key. Start with level 1 after Day ${TIER_DAY[0]}.</p>
+  <div class="seg" style="margin-top:12px;flex-wrap:wrap" id="tierSeg">${[0,1,2,3,4,5].map(t=>`<button class="${songTier===t?'on':''}" data-tier="${t}">${t===0?'All':'Level '+t}</button>`).join('')}</div>
+  <input id="songQ" placeholder="Search a song or film" value="${esc(songQuery)}" style="margin-top:12px;width:100%;height:48px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:0 14px;font:inherit;font-size:16px">
+  <div id="libList" class="card pad" style="margin-top:12px;padding-top:6px;padding-bottom:6px">${libRows()}</div>`;
+  return html}
+function libRows(){const q=songQuery.trim().toLowerCase();
+  const list=CATALOG.filter(s=>(!songTier||s.d===songTier)&&(!q||(s.t+' '+s.f).toLowerCase().includes(q))).slice(0,songTier||q?400:60);
+  if(!list.length)return '<p class="muted" style="padding:12px 0">No songs match.</p>';
+  return list.map(s=>{const ready=S.unlocked>=TIER_DAY[s.d-1];const views=s.w>=1e6?(s.w/1e6).toFixed(1)+'M':s.w>=1e3?Math.round(s.w/1e3)+'K':s.w||'';
+    return `<div class="songrow"><span class="tier" style="background:${TIER_COLORS[s.d-1]}">${s.d}</span><span style="flex:1;min-width:0"><b style="font-weight:700">${esc(s.t)}</b><span class="tiny ell">${esc([s.f,s.y].filter(Boolean).join(' · '))}${views?` · ${views} views`:''}</span></span>${s.v?`<a class="mini" href="${s.v}" target="_blank" rel="noopener" aria-label="Video tutorial">${ICON.yt}</a>`:''}${s.n?`<a class="mini" href="${s.n}" target="_blank" rel="noopener" aria-label="Notation">${IC.book}</a>`:''}</div>`}).join('')+(!songTier&&!q&&CATALOG.length>60?`<p class="tiny" style="padding:12px 0">Showing the top 60. Pick a level or search to see all ${CATALOG.length}.</p>`:'')}
+
+function micHTML(){
+  const n=S.settings.notation,th=S.settings.theme;
+  const seg=(key,opts,val)=>`<div class="seg" data-set="${key}">${opts.map(([v,l])=>`<button class="${val===v?'on':''}" data-v="${v}">${l}</button>`).join('')}</div>`;
+  return `<header class="stack"><div class="eyebrow">Setup</div><h1>Mic and settings</h1></header>
+  <section class="card pad stack" style="margin-top:20px">
+    <h2>Mic check</h2><p class="muted small">Play any single key. The note you play should light up below. If nothing shows, raise the sensitivity. If random notes appear while you are silent, lower it.</p>
+    <div class="listen"><div class="meter"><i id="mtr"></i></div><div class="heard" id="heard">–</div><div class="say muted" id="heardS">Not listening</div><span class="spacer"></span><button class="btn btn-primary btn-sm" id="micToggle">${Ear.on?'Stop':'Start mic'}</button></div>
+    <div id="freeKb">${keyboardHTML(48,83)}</div>
+    <div class="row"><span class="small" style="width:110px">Sensitivity</span><input type="range" min="1.6" max="6" step=".2" value="${7.6-S.settings.sens}" id="sens" style="flex:1"><span class="tiny" style="width:60px;text-align:right">${S.settings.sens<2.5?'High':S.settings.sens>4?'Low':'Medium'}</span></div>
+  </section>
+  <section class="card pad stack" style="margin-top:16px">
+    <h2>Notation</h2>${seg('notation',[['both','C + Sa'],['letters','C D E'],['sargam','Sa Re Ga']],n)}
+    <p class="tiny">Lowercase sargam is komal (flat): re ga dha ni. MA is tivra Ma (F#). A dot before means lower octave, an apostrophe after means upper.</p>
+    <h2 style="margin-top:12px">Theme</h2>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']],th)}
+    <h2 style="margin-top:12px">Pass mark</h2>${seg('pass',[['70','70%'],['80','80%'],['90','90%']],String(S.settings.pass))}
+  </section>
+  <section class="card pad stack" style="margin-top:16px">
+    <h2>Progress</h2><p class="muted small">Saved in this browser only. ${S.unlocked-1} days done.</p>
+    <div class="row" style="flex-wrap:wrap"><button class="btn btn-line btn-sm" id="exportP">Copy backup code</button><button class="btn btn-line btn-sm" id="importP">Restore from code</button><button class="btn btn-line btn-sm" id="resetP" style="color:var(--bad)">Reset</button></div>
+  </section>
+  <section class="stack" style="margin-top:16px"><p class="tiny">What the mic can judge: single notes, one at a time. It cannot reliably judge chords or two hands at once, so those are self-checked. A quiet room and the laptop near the keyboard help. Headphones are not needed.</p></section>`}
+
+function onboardHTML(){const st=onboardHTML.step||0;
+  const steps=[
+    `<div class="eyebrow">Piano Coach</div><h1 style="margin-top:8px">A piano class<br>that comes home.</h1><p class="muted" style="margin-top:14px">90 days. One class a day, 30 to 60 minutes. Each day tells you exactly what to practise, listens to you play, and opens the next day when you get it right.</p><p class="muted" style="margin-top:10px">By Day 90: Jana Gana Mana, Kal Ho Naa Ho, Pehla Nasha, Tum Hi Ho and Lag Ja Gale, with both hands.</p>`,
+    `<div class="eyebrow">Find Sa</div><h1 style="margin-top:8px">Middle C is your Sa.</h1><p class="muted" style="margin-top:14px">Find the group of two black keys in the middle of your keyboard. The white key just left of them is C. In this course, C is always Sa.</p><div style="margin-top:18px" id="obKb">${keyboardHTML(55,72)}</div>`,
+    `<div class="eyebrow">Mic check</div><h1 style="margin-top:8px">Let me hear you.</h1><p class="muted" style="margin-top:14px">Put your laptop or phone near the keyboard. Allow the mic, stay quiet for a second, then play middle C.</p><div class="listen" style="margin-top:18px"><div class="meter"><i id="mtr"></i></div><div class="heard" id="heard">–</div><div class="say muted" id="heardS">Tap the button to start</div></div><div id="obKb2" style="margin-top:12px">${keyboardHTML(55,72)}</div>`];
+  return `<div class="ob"><div class="dots">${steps.map((_,i)=>`<i class="${i===st?'on':''}"></i>`).join('')}</div><div style="margin-top:28px">${steps[st]}</div>
+  <div class="stack" style="margin-top:28px">${st<2?`<button class="btn btn-primary btn-block" id="obNext">Next</button>`:`<button class="btn btn-accent btn-block" id="obMic">Allow mic and listen</button><button class="linkbtn" id="obDone" style="height:44px;font-size:15px">Skip and start Day 1</button>`}
+  ${st===2?'<p class="tiny" style="text-align:center">No mic? You can still use the course. Tests become self-checked.</p>':''}</div></div>`}
+
+function bindOnboard(){
+  const nx=$('#obNext');if(nx)nx.onclick=()=>{onboardHTML.step=(onboardHTML.step||0)+1;render()};
+  const kb=$('#obKb');if(kb){const k=keyEl(kb,60);k&&k.classList.add('k-target')}
+  const kb2=$('#obKb2');if(kb2){const k=keyEl(kb2,60);k&&k.classList.add('k-hear')}
+  const mb=$('#obMic');if(mb)mb.onclick=async()=>{const ok=await startMicWithCalib($('#heardS'));if(!ok)return;$('#heardS').textContent='Now play middle C';
+    let got=false;const h=f=>{updMeter(f);if(f.midi!=null){$('#heard').textContent=letterOf(f.midi)+octOf(f.midi);const k=kb2&&keyEl(kb2,f.midi);if(k){kb2.querySelectorAll('.k-ok').forEach(e=>e.classList.remove('k-ok'));k.classList.add('k-ok')}
+      if(f.midi===60&&!got){got=true;$('#heardS').innerHTML='<span class="say ok">Heard Sa (C4). You are ready.</span>';const d=$('#obDone');if(d){d.className='btn btn-primary btn-block';d.textContent='Start Day 1'}}else if(!got){$('#heardS').textContent=`Heard ${sargamOf(f.midi)}. Find middle C.`}}};
+    Ear.handlers.add(h);onboardHTML._h=h};
+  const dn=$('#obDone');if(dn)dn.onclick=()=>{if(onboardHTML._h)Ear.handlers.delete(onboardHTML._h);S.onboarded=true;save();render()};
+}
+async function startMicWithCalib(statusEl){statusEl&&(statusEl.textContent='Opening mic…');const ok=await openMic();
+  if(!ok){statusEl&&(statusEl.textContent='Mic blocked. Allow it in the browser address bar.');toast('Mic not available');return false}
+  if(!Ear.calibrated){statusEl&&(statusEl.textContent='Stay quiet for a second…');await calibrate();Ear.calibrated=true}
+  earStart();return true}
+function updMeter(f){const m=$('#mtr');if(m)m.style.height=Math.min(100,f.rms/Math.max(f.gate,1e-4)*35)+'%'}
+
+function bindView(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{view=b.dataset.tab;planOpen=null;if(freeH){Ear.handlers.delete(freeH);freeH=null}render();window.scrollTo(0,0)});
+  document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startSession(+b.dataset.start));
+  document.querySelectorAll('[data-node]').forEach(b=>b.onclick=()=>{const n=+b.dataset.node;if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}startSession(n)});
+  document.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{songTier=+b.dataset.tier;render()});
+  const sq=$('#songQ');if(sq)sq.oninput=()=>{songQuery=sq.value;$('#libList').innerHTML=libRows()};
+  document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{const n=+b.dataset.day;planOpen=planOpen===n?null:n;render()});
+  document.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>{if(b.dataset.song)startSong(b.dataset.song)});
+  const pp=$('#printPlan');if(pp)pp.onclick=()=>{const d=document.querySelectorAll('.daydetail');window.print()};
+  document.querySelectorAll('[data-set]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=g.dataset.set;S.settings[k]=k==='pass'?+b.dataset.v:b.dataset.v;save();applyTheme();render()}));
+  const sens=$('#sens');if(sens)sens.oninput=()=>{S.settings.sens=+(7.6-+sens.value).toFixed(1);save()};
+  const mt=$('#micToggle');if(mt)mt.onclick=async()=>{if(Ear.on&&freeH){earStop();Ear.handlers.delete(freeH);freeH=null;render();return}
+    const ok=await startMicWithCalib($('#heardS'));if(!ok)return;bindFree();mt.textContent='Stop'};
+  if(view==='mic'&&Ear.on)bindFree();
+  const ex=$('#exportP');if(ex)ex.onclick=async()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));try{await navigator.clipboard.writeText(code);toast('Backup code copied')}catch(e){prompt('Copy this code',code)}};
+  const im=$('#importP');if(im)im.onclick=()=>{const c=prompt('Paste your backup code');if(!c)return;try{S=Object.assign({},defaultState,JSON.parse(decodeURIComponent(escape(atob(c.trim())))));save();applyTheme();render();toast('Progress restored')}catch(e){toast('That code did not work')}};
+  const rs=$('#resetP');if(rs)rs.onclick=()=>{if(confirm('Erase all progress and start from Day 1?')){S=JSON.parse(JSON.stringify(defaultState));S.onboarded=true;save();render()}};
+}
+let freeH=null;
+function bindFree(){if(freeH)Ear.handlers.delete(freeH);const kb=$('#freeKb');let lastK=null;
+  freeH=f=>{updMeter(f);const h=$('#heard'),hs=$('#heardS');if(!h)return;if(f.midi!=null){h.textContent=letterOf(f.midi)+octOf(f.midi);hs.textContent=sargamOf(f.midi)+' · '+f.freq.toFixed(1)+' Hz';
+    if(lastK!==f.midi){kb&&kb.querySelectorAll('.k-ok').forEach(e=>e.classList.remove('k-ok'));const k=kb&&keyEl(kb,f.midi);k&&k.classList.add('k-ok');lastK=f.midi}}
+    else if(f.rms<f.gate){hs.textContent='Listening';}};
+  Ear.handlers.add(freeH)}
+
+/* =========================================================
+   8. Session
+   ========================================================= */
+let SES=null;
+function startSession(n){const day=DAYS[n-1];if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}
+  const rec=S.days[n]||(S.days[n]={attempts:0,best:0,passed:false});
+  const prev=rec.session&&rec.session.date===todayKey()&&!rec.passed?rec.session:null;
+  SES={n,day,bi:prev?prev.bi:0,started:Date.now(),blockStart:Date.now(),scores:prev?prev.scores:{},progress:prev?prev.progress||{}:{},selfDone:{},notesPlayed:0,wrong:0};
+  if(!prev)rec.attempts++;save();wake(true);
+  renderSession()}
+let wakeLock=null;
+async function wake(on){try{if(on&&'wakeLock' in navigator){wakeLock=await navigator.wakeLock.request('screen')}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(SES&&document.visibilityState==='visible')wake(true)});
+function startSong(id){const ex=songEx(id);const day={n:0,title:SONGS[id].t,theme:'Song practice',blocks:[mk('ex','Song: '+SONGS[id].t,10,{ex,gate:true})],videos:['bolly']};
+  SES={n:0,day,bi:0,started:Date.now(),blockStart:Date.now(),scores:{},progress:{},selfDone:{},notesPlayed:0,wrong:0,songId:id};wake(true);renderSession()}
+function closeSession(){stopCheck();stopMetro();clearInterval(SES&&SES.timerInt);saveSession();wake(false);SES=null;const el=$('.session');el&&el.remove();render()}
+
+function renderSession(){
+  stopCheck();stopMetro();clearInterval(SES.timerInt);
+  let el=$('.session');if(!el){el=document.createElement('div');el.className='session';document.body.appendChild(el)}
+  const {day,bi}=SES;const b=day.blocks[bi];SES.blockStart=Date.now();
+  const segs=day.blocks.map((_,i)=>`<i class="${i<bi?'done':i===bi?'on':''}"></i>`).join('');
+  let content='';
+  if(b.type==='ex')content=exHTML(b);else if(b.type==='rhythm')content=rhythmHTML(b);else content=`<div class="row" style="gap:8px"><span class="pill sky">Tick each one when done</span></div><h1 style="font-size:28px">${esc(b.title==='New today'?day.title:b.title)}</h1>${selfHTML(b.items)}${keyboardHTML(48,71)}`;
+  const vids=day.video?[day.video]:(day.videos||[]).map(k=>PIX[k]).filter(Boolean);
+  const isLast=bi===day.blocks.length-1;
+  el.innerHTML=`<div class="s-top"><div class="s-top-inner"><button aria-label="Close" id="sClose" class="iconbtn">${ICON.x}</button><div class="bar"><i style="width:${Math.max(4,bi/day.blocks.length*100)}%"></i></div><div class="timer" id="timer">${b.minutes}:00</div></div><div class="s-title"><span>${day.n?'Day '+day.n+' · ':''}${esc(b.title)}</span><span>${bi+1} of ${day.blocks.length}</span></div></div>
+  <div class="s-body stack">${content}
+  ${b.items&&b.items.length&&b.type!=='self'?`<div class="card pad"><h2 style="font-size:16px;margin-bottom:6px">Also do</h2>${selfHTML(b.items,true)}</div>`:''}
+  ${b.cue?`<div class="warnbar" style="background:var(--sky-soft);color:var(--ink)"><b style="color:var(--sky-d)">Hand tip:</b> ${esc(b.cue)}</div>`:''}
+  ${(bi===0||isLast||b.type==='self')&&vids.length?`<div class="stack" style="margin-top:20px"><div class="eyebrow">${bi===0?'Watch first (Hindi)':'Watch again'}</div>${vids.map(v=>`<a class="vlink" href="${v.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(v.t)}</span></a>`).join('')}</div>`:''}
+  </div>
+  <div class="s-foot"><div class="s-foot-inner">${bi>0?'<button class="btn btn-ghost btn-icon" id="sPrev" aria-label="Previous block">‹</button>':''}${b.type==='ex'?`<button class="btn btn-ghost fbtn" id="hear" aria-label="Hear it">${ICON.play}<span class="hide-sm">Hear it</span></button><button class="btn btn-accent fbtn grow" id="check">Check me</button>`:'<span class="spacer"></span>'}<button class="btn ${isLast?'btn-accent':'btn-primary'} fbtn" id="sNext">${isLast?'Finish':'Next'}</button></div></div>`;
+  el.scrollTop=0;
+  $('#sClose').onclick=()=>{if(confirm('Leave this class? Your progress today is saved. You can continue later.'))closeSession()};
+  $('#sNext').onclick=()=>{if(isLast)finishSession();else{SES.bi++;saveSession();renderSession()}};
+  const pv=$('#sPrev');if(pv)pv.onclick=()=>{SES.bi--;saveSession();renderSession()};
+  const total=b.minutes*60;SES.timerInt=setInterval(()=>{const t=$('#timer');if(!t)return;const left=total-Math.floor((Date.now()-SES.blockStart)/1000);
+    t.textContent=(left<0?'+':'')+Math.floor(Math.abs(left)/60)+':'+String(Math.abs(left)%60).padStart(2,'0');t.classList.toggle('over',left<0);if(left===0&&!SES.chimed){SES.chimed=true;chime()}},500);SES.chimed=false;
+  bindSelf(el);
+  if(b.type==='ex')bindEx(b);else if(b.type==='rhythm')bindRhythm(b);
+}
+function selfHTML(items,inner){const key=SES.bi;return (inner?'':'<div class="card pad">')+items.map((t,i)=>{const on=SES.selfDone[key+':'+i];return `<button class="check${on?' on':''}" data-chk="${key}:${i}"><span class="box"></span><span>${esc(t)}</span></button>`}).join('')+(inner?'':'</div>')}
+function bindSelf(el){el.querySelectorAll('[data-chk]').forEach(b=>b.onclick=()=>{const k=b.dataset.chk;SES.selfDone[k]=!SES.selfDone[k];b.classList.toggle('on')})}
+
+function exHTML(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);
+  const ms=notes.map(x=>x.m);const lo=Math.min(...ms),hi=Math.max(...ms);
+  const lineStarts=ex.lineStarts||[];
+  const chips=notes.map((x,i)=>{const L=noteLabel(x.m);return `${lineStarts.includes(i)&&i>0?'<div class="lmark"></div>':''}<div class="chip${L.big.length>3?' wide':''}" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}${S.settings.notation!=='sargam'?`<span class="octd">${octOf(x.m)}</span>`:''}</div><div class="s">${esc(L.small)}</div></div>`}).join('');
+  const how=ex.how||(ex.song?['Tap "Hear it" once. Then press "Check me" and play along.','The small number above each note is the finger to use: 1 is the thumb, 5 is the little finger.',ex.film?'Notes come from fan notation, moved to Sa = C. If one sounds off against the song, trust your ear.':'Say the sargam in your head as you play.']:[]);
+  const best=S.best[bestKey(b)];
+  return `<div class="row" style="flex-wrap:wrap;gap:8px"><span class="pill">${ex.h==='LH'?'Left hand':'Right hand'}</span><span class="pill">${ex.bpm} bpm</span>${ex.part&&ex.part!=='full'?`<span class="pill">${esc(ex.part)}</span>`:''}${b.gate?`<span class="pill accent">Test: ${S.settings.pass}% to pass</span>`:''}${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div>
+    <h1 style="font-size:28px;margin-top:2px">${esc(ex.t)}</h1>
+    <details class="howbox"${S.howOpen===false?'':' open'}><summary>How to play</summary><ol class="how">${how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol></details>
+    <div class="hero" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say">${b.gate?'Today\'s test. Press Check me and play.':'Press Check me and play along.'}</div></div><div class="meter"><i id="mtr"></i></div></div>
+    <div class="stripwrap"><div class="strip" id="strip">${chips}</div></div>
+    <div id="kbx">${keyboardHTML(Math.min(lo,60),Math.max(hi,71))}</div>
+    <div class="row tiny" style="justify-content:space-between"><span id="sayS">Heard: –</span><button class="linkbtn" id="skipN" hidden>Skip this note</button></div>
+    <div id="exResult"></div>
+    <div id="selfWrap" hidden><button class="btn btn-line btn-sm" id="selfOk">No mic: I played it cleanly 3 times</button></div>`}
+function bestKey(b){return b.ex.song?'song:'+b.ex.song+':'+(b.ex.part||'full'):'ex:'+b.ex.t}
+let checkState=null;
+document.addEventListener('keydown',e=>{if(!SES)return;if(e.code==='Space'&&$('#check')){e.preventDefault();$('#check').click()}else if(e.code==='ArrowRight'&&$('#sNext')){$('#sNext').click()}});
+function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);const strip=$('#strip'),kbx=$('#kbx');
+  const chipAt=i=>strip.querySelector(`.chip[data-i="${i}"]`);
+  const hero=$('#hero'),heroNote=$('#heroNote'),heroF=$('#heroF'),say=$('#say');
+  const setHero=(i,state)=>{const n=notes[i];if(!n){heroNote.textContent='✓';heroF.textContent='';return}const L=noteLabel(n.m);heroNote.innerHTML=`${esc(L.big)}${L.small?`<small>${esc(L.small)}</small>`:''}`;heroF.textContent=fingers[i]?`Finger ${fingers[i]}`:'';hero.className='hero'+(state?' '+state:'')};
+  const setCur=i=>{strip.querySelectorAll('.chip').forEach(c=>c.classList.toggle('cur',+c.dataset.i===i));const c=chipAt(i);if(c)strip.scrollLeft=c.offsetLeft-strip.clientWidth/2+c.clientWidth/2;
+    kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));if(notes[i]){const k=keyEl(kbx,notes[i].m);if(k){k.classList.add('k-target');const w=kbx.querySelector('.kbwrap');w.scrollLeft=k.offsetLeft-w.clientWidth/2}}setHero(i)};
+  const prog=SES.progress[SES.bi]||{i:0,wrong:0,wrongAt:notes.map(()=>0)};
+  for(let i=0;i<prog.i;i++){const c=chipAt(i);c&&c.classList.add('ok')}
+  setCur(prog.i);
+  const hearBtn=$('#hear'),checkBtn=$('#check');
+  hearBtn.onclick=()=>{if(checkState){toast('Stop the check first');return}const c=ac();const beat=60/ex.bpm;let t=c.currentTime+.15;const start=t;
+    notes.forEach((x,i)=>{pluck(x.m,t,x.d*beat);const at=(t-start)*1000;setTimeout(()=>{setCur(i);flashKey(kbx,x.m,'k-ok',Math.max(150,x.d*beat*900))},at);t+=x.d*beat});
+    Ear.muteUntil=performance.now()+(t-start)*1000+600;setTimeout(()=>setCur(SES.progress[SES.bi]?SES.progress[SES.bi].i:0),(t-start)*1000+200)};
+  checkBtn.onclick=async()=>{if(checkState){stopCheck();return}
+    const ok=await startMicWithCalib(say);if(!ok){say.textContent='Mic not available.';$('#selfWrap').hidden=false;return}
+    let startI=0,carry={wrong:0,wrongAt:notes.map(()=>0)};const pr=SES.progress[SES.bi];
+    if(pr&&pr.i>0&&pr.i<notes.length){startI=pr.i;carry=pr}else{strip.querySelectorAll('.chip').forEach(c=>c.classList.remove('ok','miss'));$('#exResult').innerHTML=''}
+    setCur(startI);checkBtn.textContent='Stop';checkBtn.classList.add('live');say.className='hero-say';say.textContent=startI?'Picking up where you stopped.':'Play the highlighted key.';
+    let missesHere=0;
+    const wm=createWaitMode(notes.map(x=>x.m),{
+      next:i=>{missesHere=0;$('#skipN').hidden=true;setCur(i);say.className='hero-say';say.textContent=i===startI?'':'';SES.progress[SES.bi]={i:lineStartBefore(ex,i),wrong:wm.state.wrong,wrongAt:wm.state.wrongAt.slice()};saveSession()},
+      correct:(i,skipped)=>{const c=chipAt(i);c&&c.classList.add(skipped?'miss':'ok');if(!skipped){flashKey(kbx,notes[i].m,'k-ok',250);hero.className='hero ok';setTimeout(()=>hero.classList.remove('ok'),220)}},
+      wrong:(heard,want,i)=>{missesHere++;const c=chipAt(i);c&&c.classList.add('miss');flashKey(kbx,heard,'k-bad',500);hero.className='hero bad';say.className='hero-say bad';say.textContent=direction(heard,want);if(missesHere>=4)$('#skipN').hidden=false},
+      done:sum=>{stopCheck(false);delete SES.progress[SES.bi];kbx.querySelectorAll('.k-target').forEach(e=>e.classList.remove('k-target'));strip.querySelectorAll('.cur').forEach(e=>e.classList.remove('cur'));setHero(-1);recordScore(b,sum);showExResult(b,sum);saveSession()}},startI);
+    wm.state.wrong=carry.wrong||0;wm.state.wrongAt=(carry.wrongAt||notes.map(()=>0)).slice();
+    const h=f=>{updMeter(f);const ss=$('#sayS');if(ss&&f.midi!=null)ss.textContent='Heard: '+spoken(f.midi);wm.onFrame(f)};
+    checkState={h,wm};Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
+    if(SYNTH_MIC)window.__autoplay&&window.__autoplay(notes.slice(startI),ex.bpm)};
+  $('#selfOk').onclick=()=>{const sum={notes:notes.length,wrong:0,accuracy:S.settings.pass,self:true};recordScore(b,sum);showExResult(b,sum);saveSession()};
+}
+function lineStartBefore(ex,i){const ls=ex.lineStarts||[0];let r=0;for(const x of ls)if(x<=i)r=x;return r}
+function direction(heard,want){const d=want-heard;const W=spoken(want);
+  if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. Play ${W} ${d>0?'higher':'lower'}.`;
+  const n=Math.abs(d);return `${n===1?'One key':n+' keys'} to the ${d>0?'right':'left'}: ${W}`}
+function spoken(m){const n=S.settings.notation;if(n==='letters')return midiName(m);if(n==='sargam')return sargamOf(m);return `${letterOf(m)} (${sargamOf(m)})`}
+function stopCheck(){if(checkState){Ear.handlers.delete(checkState.h);checkState=null;const c=$('#check');if(c){c.textContent='Check me';c.classList.remove('live')}}}
+function recordScore(b,sum){const k=bestKey(b);S.best[k]=Math.max(S.best[k]||0,sum.accuracy);if(b.ex.song&&(b.ex.part==='full'||SES.songId))S.best['song:'+b.ex.song]=Math.max(S.best['song:'+b.ex.song]||0,sum.accuracy);
+  SES.notesPlayed+=sum.notes;SES.wrong+=sum.wrong||0;
+  if(b.gate){const prev=SES.scores[SES.bi];if(!prev||sum.accuracy>prev.accuracy)SES.scores[SES.bi]=sum}save();logPractice()}
+function showExResult(b,sum){const pass=sum.accuracy>=S.settings.pass;const notes=parseNotes(b.ex.n);
+  const worst=(sum.wrongAt||[]).map((w,i)=>({w,i})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w).slice(0,3).map(x=>spoken(notes[x.i].m)+(x.w>1?' ×'+x.w:'')).join(', ');
+  const head=sum.self?'Self-checked':pass?(b.gate?'Test passed.':'Clean.'):'Not yet. Once more, slower.';
+  $('#exResult').innerHTML=`<div class="result ${pass?'ok':'bad'}"><div class="display">${sum.accuracy}%</div><div style="flex:1"><b>${head}</b><div class="small">${sum.self?'Marked by you, counted at the pass mark.':`${sum.notes} notes, ${sum.wrong} wrong${worst?'. Trouble spots: '+worst:''}`}</div></div></div>`;
+  const say=$('#say');if(say){say.className='hero-say';say.textContent=pass?'Move on when ready.':'Tap Hear it, then try again.'}}
+function saveSession(){if(!SES||!SES.n)return;const r=S.days[SES.n];if(!r)return;r.session={bi:SES.bi,scores:SES.scores,progress:SES.progress,date:todayKey()};save()}
+
+/* rhythm block */
+let metro=null;
+function rhythmHTML(b){const r=b.rhythm;SES.bpm=SES.bpm||r.bpm;
+  return `<div><span class="pill">${r.beats} beats</span><h1 style="font-size:30px;margin-top:10px">Rhythm</h1></div>
+  <ol class="how"><li>${esc(r.how)}</li><li>Start slow. When it feels easy for a full minute, add 4 bpm.</li><li>"Check my timing" plays 4 clicks, then goes silent. Keep clapping, or tap middle C, on every beat.</li></ol>
+  <div class="card pad stack"><div class="row" style="justify-content:center;gap:18px"><button class="btn btn-ghost btn-sm" id="bpmDn">−4</button><div class="bpm" id="bpm">${r.bpm}</div><button class="btn btn-ghost btn-sm" id="bpmUp">+4</button></div><div class="tiny" style="text-align:center">beats per minute</div>
+  <div class="beats" id="beats" style="justify-content:center">${Array.from({length:r.beats},(_,i)=>`<div class="beat${i===0||(r.beats===8&&i===4)?' acc':''}">${i+1}</div>`).join('')}</div>
+  <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="metroBtn">${ICON.play} Start metronome</button><button class="btn btn-line" id="timeBtn">Check my timing</button></div>
+  <div id="rhyRes"></div></div>`}
+function bindRhythm(b){let bpm=b.rhythm.bpm;const beats=b.rhythm.beats;const show=()=>$('#bpm').textContent=bpm;
+  $('#bpmDn').onclick=()=>{bpm=Math.max(40,bpm-4);show();if(metro){stopMetro();startMetro(bpm,beats)}};
+  $('#bpmUp').onclick=()=>{bpm=Math.min(160,bpm+4);show();if(metro){stopMetro();startMetro(bpm,beats)}};
+  $('#metroBtn').onclick=()=>{if(metro){stopMetro();$('#metroBtn').innerHTML=ICON.play+' Start metronome'}else{startMetro(bpm,beats);$('#metroBtn').textContent='Stop'}};
+  $('#timeBtn').onclick=async()=>{stopMetro();$('#metroBtn').innerHTML=ICON.play+' Start metronome';const ok=await startMicWithCalib($('#rhyRes'));if(!ok){$('#rhyRes').textContent='Timing check needs the mic.';return}
+    const c=ac();const beat=60/bpm;const t0=c.currentTime+.3;const N=8;const perfT0=performance.now()+300;
+    for(let i=0;i<4;i++)click(t0+i*beat,i===0);
+    $('#rhyRes').innerHTML='<p class="say" style="text-align:center">Listen: 4 clicks. Then keep the beat on your own.</p>';
+    Ear.muteUntil=0;const onsets=[];const h=f=>{if(f.onset)onsets.push(f.t)};Ear.handlers.add(h);
+    const dots=[...document.querySelectorAll('#beats .beat')];
+    for(let i=0;i<4+N;i++)setTimeout(()=>{dots.forEach(d=>d.classList.remove('on'));const d=dots[i%dots.length];d&&d.classList.add('on');if(i===4)$('#rhyRes').innerHTML='<p class="say" style="text-align:center">Your turn. 8 beats.</p>'},300+i*beat*1000);
+    setTimeout(()=>{Ear.handlers.delete(h);dots.forEach(d=>d.classList.remove('on'));
+      const targets=Array.from({length:N},(_,i)=>perfT0+(4+i)*beat*1000);let hits=0,offs=[];
+      targets.forEach(t=>{const near=onsets.reduce((a,o)=>Math.abs(o-t)<Math.abs(a-t)?o:a,Infinity);const d=near-t;if(Math.abs(d)<=Math.max(90,beat*1000*.18)){hits++;offs.push(d)}});
+      const avg=offs.length?offs.reduce((a,b)=>a+b,0)/offs.length:0;const pct=Math.round(hits/N*100);
+      const tip=!offs.length?'I did not hear the beats. Clap louder or tap a key.':avg<-35?'You are rushing. Wait for the beat.':avg>35?'You are dragging a little. Lean into the beat.':'Steady.';
+      $('#rhyRes').innerHTML=`<div class="row" style="padding:14px;border-radius:12px;background:var(--surface-2)"><div class="display" style="font-size:32px">${hits}/${N}</div><div><b>${pct>=75?'On the beat.':'Keep at it.'}</b><div class="small muted">${tip}</div></div></div>`;logPractice()},300+(4+N)*beat*1000+400)};
+}
+function startMetro(bpm,beats){const c=ac();const beat=60/bpm;let next=c.currentTime+.1,i=0;const dots=[...document.querySelectorAll('#beats .beat')];
+  metro={int:setInterval(()=>{while(next<c.currentTime+.2){const k=i%beats;click(next,k===0||(beats===8&&k===4));const at=(next-c.currentTime)*1000;setTimeout(()=>{dots.forEach(d=>d.classList.remove('on'));dots[k]&&dots[k].classList.add('on')},at);next+=beat;i++}},50)};
+  Ear.muteUntil=Infinity}
+function stopMetro(){if(metro){clearInterval(metro.int);metro=null;Ear.muteUntil=0;document.querySelectorAll('#beats .beat').forEach(d=>d.classList.remove('on'))}}
+
+/* finish */
+function finishSession(){stopCheck();stopMetro();clearInterval(SES.timerInt);
+  const {day}=SES;const gates=day.blocks.map((b,i)=>b.gate?i:-1).filter(i=>i>=0);
+  const scored=gates.map(i=>SES.scores[i]);const missing=gates.filter(i=>!SES.scores[i]);
+  const acc=scored.filter(Boolean).length?Math.round(scored.filter(Boolean).reduce((a,s)=>a+s.accuracy,0)/scored.filter(Boolean).length):0;
+  const passed=!missing.length&&scored.every(s=>s.accuracy>=S.settings.pass);
+  const mins=Math.max(1,Math.round((Date.now()-SES.started)/60000));
+  logPractice();
+  const xpGain=(SES.notesPlayed-SES.wrong)+(passed?20:0);S.xp=(S.xp||0)+Math.max(0,xpGain);
+  let rec=null;if(day.n){rec=S.days[day.n];rec.best=Math.max(rec.best||0,acc);if(passed){rec.passed=true;rec.date=todayKey();delete rec.session;if(S.unlocked===day.n)S.unlocked=day.n+1}}save();
+  const el=$('.session');const C=2*Math.PI*80;const col=passed?'var(--ok)':acc>=S.settings.pass-15?'var(--accent)':'var(--bad)';
+  const attempts=rec?rec.attempts:0;
+  let head,sub,actions;
+  if(!day.n){head=passed?'Nice.':'Keep going.';sub=`${SONGS[SES.songId].t}. Practise songs any time.`;actions=`<button class="btn btn-primary btn-block" id="rDone">Done</button>`}
+  else if(passed){head=day.n===90?'You did it.':`Day ${day.n} done.`;sub=day.n===90?'90 days. From finding middle C to a recital. Keep the recordings.':`Day ${day.n+1} is unlocked. Come back tomorrow, or start it now if you have time left.`;
+    actions=`<button class="btn btn-primary btn-block" id="rDone">Done for today</button>${day.n<90?`<button class="btn btn-ghost btn-block" id="rNext">Start Day ${day.n+1} now</button>`:''}`}
+  else if(missing.length){head='Test not taken.';sub=`Play the test block${gates.length>1?'s':''} with "Check me" to unlock the next day. ${missing.map(i=>day.blocks[i].title).join(', ')}.`;
+    actions=`<button class="btn btn-accent btn-block" id="rRetry">Go to the test</button><button class="btn btn-ghost btn-block" id="rDone">Do it tomorrow</button>`}
+  else{head='Almost.';sub=`You need ${S.settings.pass}%. Slow down and play it once more. Accuracy beats speed.`;
+    actions=`<button class="btn btn-accent btn-block" id="rRetry">Retake the test</button><button class="btn btn-ghost btn-block" id="rDone">Repeat this day tomorrow</button>${attempts>=3?'<button class="btn btn-line btn-block" id="rSkip">Move on anyway</button>':''}`}
+  el.innerHTML=`<div class="ob stack" style="text-align:center"><div class="ring"><svg width="180" height="180"><circle cx="90" cy="90" r="80" stroke="var(--surface-2)" stroke-width="12" fill="none"/><circle cx="90" cy="90" r="80" stroke="${col}" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" id="arc" style="transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)"/></svg><div class="v"><div><b>${missing.length?'–':acc+'%'}</b><div class="tiny">accuracy</div></div></div></div>
+    <h1 style="font-size:32px;margin-top:16px">${head}</h1><p class="muted">${esc(sub)}</p>
+    <div class="stats" style="margin-top:16px"><div class="stat gold"><span>Total XP</span><b>+${Math.max(0,xpGain)}</b></div><div class="stat ok"><span>Accuracy</span><b>${missing.length?'–':acc+'%'}</b></div><div class="stat sky"><span>Time</span><b>${mins}m</b></div></div>
+    <div class="stack" style="margin-top:20px">${actions}</div></div>`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const a=$('#arc');if(a)a.style.strokeDashoffset=C*(1-(missing.length?0:acc)/100)}));
+  $('#rDone').onclick=()=>{closeSession();view='today';render()};
+  const rn=$('#rNext');if(rn)rn.onclick=()=>{const k=day.n+1;closeSession();startSession(k)};
+  const rr=$('#rRetry');if(rr)rr.onclick=()=>{SES.bi=(missing[0]!=null?missing[0]:gates.find(i=>SES.scores[i].accuracy<S.settings.pass));renderSession()};
+  const sk=$('#rSkip');if(sk)sk.onclick=()=>{rec.passed=true;rec.skipped=true;rec.date=todayKey();if(S.unlocked===day.n)S.unlocked++;save();closeSession();view='today';render();toast('Moved on. Come back to Day '+day.n+' later.')};
+}
+
+/* test hook for ?mic=synth: plays target notes into the analyser */
+if(SYNTH_MIC){window.__autoplay=(notes,bpm,wrongAt=-1)=>{const c=ac();const beat=Math.max(.45,60/bpm);let t=c.currentTime+.3;notes.forEach((x,i)=>{if(i===wrongAt){pluck(x.m+2,t,beat*.8,.5);t+=beat}pluck(x.m,t,beat*.8,.5);t+=beat})};window.__S=()=>S;window.__DAYS=DAYS}
+
+render();
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!window.Capacitor)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
