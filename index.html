@@ -727,6 +727,8 @@ function mpm(x,sr,minF=60,maxF=2200,k=.9){const N=x.length;const maxLag=Math.min
   while(tau<maxLag){while(tau<maxLag&&nsdf[tau]<=0)tau++;let best=-1,bt=-1;while(tau<maxLag&&nsdf[tau]>0){if(nsdf[tau]>best){best=nsdf[tau];bt=tau}tau++}if(bt>=minLag)peaks.push(bt)}
   if(!peaks.length)return null;let top=0;for(const p of peaks)top=Math.max(top,nsdf[p]);const p=peaks.find(p=>nsdf[p]>=k*top);
   const a=nsdf[p-1],b=nsdf[p],c=nsdf[p+1];const den=a-2*b+c;const sh=den!==0?.5*(a-c)/den:0;return {freq:sr/(p+sh),clarity:Math.min(1,b-.25*(a-c)*sh)}}
+function goertzel(x,sr,f){const w=2*Math.PI*f/sr,c=2*Math.cos(w);let s1=0,s2=0;for(let i=0;i<x.length;i++){const s0=x[i]+c*s1-s2;s2=s1;s1=s0}return Math.sqrt(Math.max(0,s1*s1+s2*s2-c*s1*s2))/x.length}
+function noteEnergy(x,sr,m){const f=midiToFreq(m);return goertzel(x,sr,f)+.5*goertzel(x,sr,2*f)}
 function rmsOf(x){let s=0;for(let i=0;i<x.length;i++)s+=x[i]*x[i];return Math.sqrt(s/x.length)}
 
 const Ear={on:false,buf:null,noise:.003,env:0,envMin:1,armed:true,handlers:new Set(),muteUntil:0,last:null,frame:0};
@@ -740,16 +742,22 @@ async function openMic(){
   c.createMediaStreamSource(micStream).connect(analyser);return true}
 async function calibrate(ms=900){const samples=[];const end=performance.now()+ms;while(performance.now()<end){analyser.getFloatTimeDomainData(Ear.buf);samples.push(rmsOf(Ear.buf));await new Promise(r=>setTimeout(r,30))}
   samples.sort((a,b)=>a-b);Ear.noise=Math.max(SYNTH_MIC?.0005:.002,samples[Math.floor(samples.length*.9)]||.002);return Ear.noise}
-function earStart(){if(Ear.on)return;Ear.on=true;Ear.int=setInterval(earTick,33)}
+function earStart(){if(Ear.on)return;Ear.on=true;Ear.int=setInterval(earTick,16)}
 function earStop(){Ear.on=false;clearInterval(Ear.int)}
-function earTick(){if(!Ear.on)return;Ear.frame++; // ~30 checks per second
-  analyser.getFloatTimeDomainData(Ear.buf);const level=rmsOf(Ear.buf);const gate=Ear.noise*S.settings.sens;
-  Ear.env=.6*Ear.env+.4*level;Ear.envMin=Math.min(Ear.envMin*1.02+1e-5,Ear.env);let onset=false;
-  if(Ear.armed&&Ear.env>gate&&Ear.env>Ear.envMin*1.8){onset=true;Ear.armed=false}
-  if(!Ear.armed&&Ear.env<Ear.envMin*1.2+gate*.5)Ear.armed=true;if(onset)Ear.envMin=Ear.env;
-  let midi=null,freq=0;const muted=!SYNTH_MIC&&performance.now()<Ear.muteUntil;
-  if(level>gate&&!muted){const r=mpm(Ear.buf,AC.sampleRate);if(r&&r.clarity>.8){freq=r.freq;midi=Math.round(69+12*Math.log2(freq/440))}}
-  const f={t:performance.now(),rms:level,gate,midi,freq,onset:onset&&!muted};Ear.last=f;Ear.handlers.forEach(h=>h(f))}
+function earTick(){if(!Ear.on)return;Ear.frame++; // ~60 checks per second
+  analyser.getFloatTimeDomainData(Ear.buf);
+  const win=Ear.lowNotes?Ear.buf:Ear.buf.subarray(Ear.buf.length-1024); // short, recent window for melody: catches fast notes
+  const level=rmsOf(win);const gate=Ear.noise*S.settings.sens;const now=performance.now();
+  // key press = a sudden rise in loudness, even while the last note is still ringing
+  const lv=Ear.lv||(Ear.lv=[]);lv.push(level);if(lv.length>5)lv.shift();const base=Math.min(...lv.slice(0,-1));
+  const B=Ear.buf,N=B.length;const recent=rmsOf(B.subarray(N-256)),older=rmsOf(B.subarray(N-1024,N-512)); // attack inside the window
+  let onset=false;if(now-(Ear.lastOn||0)>110&&level>gate&&((lv.length>=3&&level>base*1.35&&level-base>gate*.4)||(recent>gate&&recent>older*1.6))){onset=true;Ear.lastOn=now;Ear.lv=[level]}
+  let midi=null,freq=0;const muted=!SYNTH_MIC&&now<Ear.muteUntil;
+  if(level>gate&&!muted){const r=mpm(win,AC.sampleRate,Ear.lowNotes?60:90);if(r&&r.clarity>.8){freq=r.freq;const mf=69+12*Math.log2(freq/440);if(Math.abs(mf-Math.round(mf))<=.38)midi=Math.round(mf)}} // between two keys = two notes blending: ignore
+  let tE=0,nE=0;if(Ear.want!=null&&level>gate&&!muted){const sr=AC.sampleRate;tE=noteEnergy(B,sr,Ear.want);nE=Math.max(noteEnergy(B,sr,Ear.want-1),noteEnergy(B,sr,Ear.want+1))}
+  let cDom;if(midi!=null&&Ear.want!=null){const sr=AC.sampleRate;const cE=noteEnergy(B,sr,midi);cDom=cE>1.3*Math.max(noteEnergy(B,sr,midi-1),noteEnergy(B,sr,midi+1))}
+  let wE=null;if(Ear.watch&&Ear.watch.length&&level>gate&&!muted){wE={};for(const m of Ear.watch)wE[m]=noteEnergy(B,AC.sampleRate,m)}
+  const f={t:now,rms:level,gate,midi,freq,onset:onset&&!muted,tE,nE,wE,cDom};Ear.last=f;Ear.handlers.forEach(h=>h(f))}
 
 // Follow mode: waits for the next note, but also follows you when you restart a line,
 // go back to the top, or jump to another spot. Replayed notes after a restart are not mistakes.
@@ -757,31 +765,48 @@ function createWaitMode(targets,ui,start=0,opts={}){const holdMs=110,wrongHoldMs
   const ls=[...new Set([0,...(opts.lineStarts||[])])].sort((a,b)=>a-b);
   const s={i:start,wrong:0,wrongAt:targets.map(()=>0),cand:null,candSince:0,strike:0,used:-1,hist:[],recent:[],pending:null,restarts:0};
   const matches=(h,w)=>w!=null&&(h===w||(w<60&&Math.abs(h-w)===12));
-  const next=()=>{if(s.i<targets.length)ui.next(s.i);else ui.done(summary())};
+  const next=()=>{s.eh=[];Ear.want=s.i<targets.length?targets[s.i]:null;if(s.i<targets.length)ui.next(s.i);else{Ear.want=null;ui.done(summary())}};
+  Ear.want=targets[start];
   const seqEnds=(j,k)=>{if(j-k+1<0||s.hist.length<k)return false;for(let q=0;q<k;q++)if(!matches(s.hist[s.hist.length-1-q],targets[j-q]))return false;return true};
-  function addWrong(h){s.wrong++;s.wrongAt[s.i]++;s.recent.push({strike:s.strike,idx:s.i});if(s.recent.length>6)s.recent.shift();ui.wrong(h,targets[s.i],s.i)}
+  function addWrong(h){(s.wh||(s.wh=[])).push(s.i+":"+h);s.wrong++;s.wrongAt[s.i]++;s.recent.push({strike:s.strike,idx:s.i});if(s.recent.length>6)s.recent.shift();ui.wrong(h,targets[s.i],s.i)}
   function refund(n){const lim=s.strike-n;for(let q=s.recent.length-1;q>=0&&n>0;q--){const r=s.recent[q];if(r.strike>=lim){s.wrong=Math.max(0,s.wrong-1);s.wrongAt[r.idx]=Math.max(0,s.wrongAt[r.idx]-1);s.recent.splice(q,1);n--}}}
   function jump(to,kind){const from=s.i;s.i=to;s.restarts++;ui.jump&&ui.jump(to,from,kind);next()}
-  function stable(h){s.hist.push(h);if(s.hist.length>4)s.hist.shift();
+  function stable(h){s.hist.push(h);if(s.hist.length>4)s.hist.shift();(s.rn||(s.rn=[])).push(h);if(s.rn.length>3)s.rn.shift();Ear.watch=[...new Set(s.rn)];
     if(s.pending){const p=s.pending;s.pending=null;
       if(matches(h,targets[p.a+1])){jump(p.a+2,p.kind);return}
       addWrong(p.h)}                                   // it was a real mistake, not a restart
     const want=targets[s.i];
     if(matches(h,want)){ui.correct(s.i);s.i++;next();return}
+    // same key twice in a row and you're already on the note after it: the repeat press was too quick to hear, count it
+    if(s.i>0&&targets[s.i]===targets[s.i-1]&&matches(h,targets[s.i+1])){ui.correct(s.i);s.i++;ui.correct(s.i);s.i++;next();return}
     // 1. restart from a line start (this line first, then earlier lines, then the top): wait one note to confirm
     for(const a of ls.filter(a=>a<s.i).reverse()){if(matches(h,targets[a])&&a+1<targets.length){s.pending={a,h,kind:a===0?'top':'line'};ui.hint&&ui.hint(a);return}}
     // 2. your last 3 notes match another spot nearby: follow you there
     let best=null;for(let j=Math.max(2,s.i-48);j<=Math.min(targets.length-1,s.i+12);j++){if(j===s.i-1)continue;if(seqEnds(j,3)){const d=Math.abs(j+1-s.i);if(!best||d<best.d)best={to:j+1,d}}}
     if(best){refund(2);jump(best.to,best.to>s.i?'skip':'back');return}
     // 3. skipped exactly one note
-    if(s.i+1<targets.length&&matches(h,targets[s.i+1])&&!matches(h,targets[s.i])){s.wrong++;s.wrongAt[s.i]++;s.recent.push({strike:s.strike,idx:s.i});ui.correct(s.i,true);s.i++;ui.correct(s.i);s.i++;next();return}
+    if(s.i+1<targets.length&&matches(h,targets[s.i+1])&&!matches(h,targets[s.i])){const already=s.recent.length&&s.recent[s.recent.length-1].idx===s.i;if(!already){s.wrong++;s.wrongAt[s.i]++;s.recent.push({strike:s.strike,idx:s.i})}ui.correct(s.i,true);s.i++;ui.correct(s.i);s.i++;next();return}
     addWrong(h)}
-  function onFrame(f){if(s.i>=targets.length)return;if(f.onset)s.strike++;if(f.midi==null){s.cand=null;return}
-    if(f.midi!==s.cand){s.cand=f.midi;s.candSince=f.t}const held=f.t-s.candSince;
-    const need=matches(s.cand,targets[s.i])||(s.pending&&matches(s.cand,targets[s.pending.a+1]))?holdMs:wrongHoldMs;
-    if(held>=need&&s.used!==s.strike){s.used=s.strike;stable(s.cand)}}
+  function onFrame(f){if(s.i>=targets.length)return;
+    const eh=s.eh||(s.eh=[]);if(f.onset){s.strike++;s.cand=null;s.onsetT=f.t;s.base=eh.length?Math.min(...eh):0}
+    eh.push(f.tE||0);if(eh.length>4)eh.shift();
+    if(f.wE){const wh=s.wh2||(s.wh2={});for(const k in f.wE){(wh[k]||(wh[k]=[])).push(f.wE[k]);if(wh[k].length>5)wh[k].shift()}
+      if(f.onset){s.wbase={};for(const k in wh)s.wbase[k]=Math.min(...wh[k].slice(0,-1).concat([Infinity]))}}
+    // overlapping notes (pedal, fast legato): did the expected note itself just get louder after this press?
+    const ringing=m=>(s.rn||[]).includes(m);
+    if(Ear.want===targets[s.i]&&(f.midi==null||matches(f.midi,targets[s.i])||ringing(f.midi))&&s.strike!==s.lastStrike&&f.t-(s.onsetT||0)<160&&f.tE>(s.base||0)*1.8+1e-5&&f.tE>f.nE*1.3&&f.tE>f.rms*.12){
+      s.prevMidi=s.lastMidi;s.lastMidi=targets[s.i];s.lastStrike=s.strike;stable(targets[s.i]);return}  // new press: judge only what comes after it
+    if(f.midi==null){s.nulls=(s.nulls||0)+1;if(s.nulls>2)s.cand=null;return}s.nulls=0;
+    if(f.midi!==s.cand){s.cand=f.midi;s.candSince=f.t;s.frames=0}s.frames++;
+    // a different key counts as a new note by itself; the same key again needs a new press
+    const fresh=s.strike!==s.lastStrike||(s.cand!==s.lastMidi&&s.cand!==s.prevMidi);if(!fresh)return;
+    const expected=matches(s.cand,targets[s.i])||(s.pending&&matches(s.cand,targets[s.pending.a+1]));
+    const w=targets[s.i];if(!expected&&f.t-(s.onsetT||0)<90&&s.lastMidi!=null&&w!=null&&s.cand>Math.min(s.lastMidi,w)&&s.cand<Math.max(s.lastMidi,w))return; // between last and next note: two notes blending
+    if(!expected&&f.cDom===false)return; // a phantom pitch between two ringing notes, not a key you pressed
+    const held=f.t-s.candSince;const ok=expected?(s.frames>=2&&held>=20):((s.rn||[]).includes(s.cand)&&f.wE&&f.wE[s.cand]!=null&&!(f.wE[s.cand]>(s.wbase&&s.wbase[s.cand]||0)*1.6))?false:(s.frames>=4&&held>=70); // an earlier note still ringing (not re-struck) is not a mistake
+    if(ok){s.prevMidi=s.lastMidi;s.lastMidi=s.cand;s.lastStrike=s.strike;stable(s.cand)}}
   function summary(){const n=targets.length;return {notes:n,wrong:s.wrong,accuracy:Math.round(100*n/(n+s.wrong)),wrongAt:s.wrongAt,restarts:s.restarts}}
-  function skip(){if(s.i>=targets.length)return;s.wrong++;s.wrongAt[s.i]++;s.used=s.strike;ui.correct(s.i,true);s.i++;next()}
+  function skip(){if(s.i>=targets.length)return;s.wrong++;s.wrongAt[s.i]++;s.lastStrike=s.strike;ui.correct(s.i,true);s.i++;next()}
   return {onFrame,summary,skip,state:s}}
 
 /* =========================================================
@@ -1136,7 +1161,7 @@ function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fing
   $('#restart').onclick=()=>{if(checkState)startRound(true)};
   async function micOn(){const ok=await startMicWithCalib(say);if(!ok){status('Mic is off.','bad');$('#exResult').innerHTML=`<button class="btn btn-line btn-block" id="selfOk">No mic: I played it cleanly 3 times</button>`;$('#selfOk').onclick=()=>{const sum={notes:notes.length,wrong:0,accuracy:S.settings.pass,self:true};recordScore(b,sum);showExResult(b,sum);saveSession()};return}
     S.micOk=true;save();startRound(false)}
-  function startRound(reset){if(checkState){Ear.handlers.delete(checkState.h);checkState=null}
+  function startRound(reset){Ear.lowNotes=Math.min(...notes.map(x=>x.m))<50;if(checkState){Ear.handlers.delete(checkState.h);checkState=null}
     strip.querySelectorAll('.chip').forEach(c=>c.classList.remove('ok','miss'));if(reset)$('#exResult').innerHTML='';
     setCur(0,true);status(round>1?`Round ${round}. Go again.`:'Listening. Just play.');document.body.classList.add('listening');let miss=0;
     const wm=createWaitMode(notes.map(x=>x.m),{
@@ -1177,7 +1202,7 @@ function direction(heard,want){const d=want-heard;const W=spoken(want);
   if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. ${W} ${d>0?'higher':'lower'}.`;
   const n=Math.abs(d);return `${n===1?'One key':n+' keys'} ${d>0?'right':'left'}: ${W}`}
 function spoken(m){const n=S.settings.notation;if(n==='letters')return midiName(m);if(n==='sargam')return sargamOf(m);return `${letterOf(m)} (${sargamOf(m)})`}
-function stopCheck(){document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null}}
+function stopCheck(){Ear.want=null;Ear.watch=null;document.body.classList.remove('listening');if(checkState){Ear.handlers.delete(checkState.h);checkState=null}}
 function recordScore(b,sum){const k=bestKey(b);S.best[k]=Math.max(S.best[k]||0,sum.accuracy);if(b.ex.song&&(b.ex.part==='full'||SES.songId))S.best['song:'+b.ex.song]=Math.max(S.best['song:'+b.ex.song]||0,sum.accuracy);
   SES.notesPlayed+=sum.notes;SES.wrong+=sum.wrong||0;
   if(b.gate){const prev=SES.scores[SES.bi];if(sum.self)sum.passed=true;if(!prev||sum.passed||(!prev.passed&&sum.accuracy>prev.accuracy))SES.scores[SES.bi]=Object.assign({},sum,{passed:sum.passed||(prev&&prev.passed)});if(SES.n&&!sum.self)S.lastTest={day:SES.n,key:bestKey(b),acc:Math.max(sum.accuracy,(S.lastTest&&S.lastTest.day===SES.n&&S.lastTest.key===bestKey(b))?S.lastTest.acc:0),wrongAt:sum.wrongAt}}
