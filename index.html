@@ -140,7 +140,7 @@ h2{font-size:19px;font-weight:700}
 .bar{flex:1;height:18px;border-radius:99px;background:var(--surface-2);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:99px;background:var(--ok);position:relative;transition:width .4s ease}
 .bar i::after{content:"";position:absolute;left:10px;right:10px;top:4px;height:4px;border-radius:4px;background:rgba(255,255,255,.35)}
-.s-title{max-width:760px;margin:6px auto 0;display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-3)}
+.s-title{max-width:760px;margin:6px auto 0;display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink-2)}
 .timer{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink-2);background:var(--surface-2);padding:4px 10px;border-radius:10px}
 .timer.over{color:var(--accent-d);background:var(--accent-soft)}
 .s-body{max-width:760px;margin:0 auto;padding:12px 16px 150px}
@@ -201,6 +201,26 @@ h2{font-size:19px;font-weight:700}
 .ngrid.grid2 .nrow{position:relative;padding-top:26px}
 .ngrid.grid2 .nrow::before{content:attr(data-lab);position:absolute;top:6px;left:10px;font-weight:800;font-size:16px;color:#9C88FF}
 .ngrid.grid2 .chip{width:auto;flex:1 1 0;min-width:0}
+.lrow{border-radius:16px;background:var(--surface-2);padding:8px;cursor:pointer;border:2px solid transparent}
+.lrow.on{border-color:var(--accent)}
+.lrow .nrow{background:none;padding:4px 0 0}
+.lhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:2px 2px 0}
+.cchip{font-size:12px;font-weight:800;color:#fff;background:var(--grape);padding:2px 8px;border-radius:8px}
+.lyr{flex:0 0 100%;font-size:15px;font-weight:600;color:var(--ink)}
+.focusbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--accent-soft);font-weight:700}
+.segscroll{display:flex;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.segscroll button{flex:none}
+.chev{font-size:26px;font-weight:700;color:var(--ink-3);padding:0 4px}
+.ngrid .lrow .chip{width:calc((100% - 30px)/6);min-width:40px}
+.ngrid .lrow .chip .l{font-size:22px}
+.ngrid .lrow .chip .f{font-size:14px;height:16px}
+.ngrid .lrow .chip .s{font-size:12px}
+.hero.compact{padding:8px 14px}
+.hero.compact .hero-note{font-size:34px;min-width:64px}
+.hero.compact .hero-note small{font-size:16px}
+.hero.compact .hero-f{font-size:15px;padding:4px 10px}
+.hero.compact .hero-say{margin-top:4px;font-size:15px}
+.focusbar{background:transparent!important;border:2px solid var(--line);padding:6px 6px 6px 14px!important}
 .rlab{flex:0 0 100%;font-weight:800;font-size:15px;color:var(--grape);padding:0 2px}
 .nrow{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:14px;background:var(--surface-2)}
 .ngrid .chip{width:calc((100% - 42px)/8);min-width:32px;flex:0 0 auto;padding:4px 2px 6px;border-radius:10px;box-shadow:0 2px 0 var(--line)}
@@ -209,10 +229,12 @@ h2{font-size:19px;font-weight:700}
 .ngrid .chip .f{font-size:11px;height:13px}
 .chip.cur .l,.chip.cur .s,.chip.cur .f{color:#fff!important}
 .ngrid .chip .s{font-size:10px}
+.chip.w1{background:color-mix(in srgb,var(--sky) 22%,var(--surface));border-bottom-color:var(--sky)}
+.chip.editable{outline:2px dashed var(--sky);outline-offset:-4px;cursor:pointer}
 .chip.demo{background:var(--sky-soft);border-color:var(--sky)}
 .sheet-bg{position:fixed;inset:0;background:rgba(10,12,20,.45);z-index:80;display:flex;align-items:flex-end;justify-content:center}
 .sheet-bg[hidden]{display:none}
-.sheet{width:100%;max-width:560px;background:var(--surface);border-radius:24px 24px 0 0;padding:12px 20px calc(20px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;animation:up .2s ease}
+.sheet{width:100%;max-width:560px;background:var(--surface);border-radius:24px 24px 0 0;padding:12px 20px calc(34px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;animation:up .2s ease}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
 @keyframes up{from{transform:translateY(30px);opacity:0}}
 .lmark{flex:none;width:3px;margin:8px 2px;border-radius:2px;background:var(--line)}
@@ -293,6 +315,7 @@ select,input[type=range]{font:inherit;accent-color:var(--accent)}
 <body>
 <div id="root"></div>
 <div class="toast" id="toast"></div>
+<script src="pix-songs.js"></script>
 <script>
 "use strict";
 /* =========================================================
@@ -582,6 +605,7 @@ function rhythmSpec(code,wi){const base={bpm:60+Math.min(30,wi*3),beats:4,how:'C
   if(code==='rhythm:60')return {bpm:60,beats:4,how:'Whole note: hold for 4 clicks. Half: 2. Quarter: 1. Play C each way.'};
   return base}
 function mk(type,title,minutes,extra){return Object.assign({type,title,minutes},extra)}
+const OCC={};
 function buildDay(n){const [t,tech,nw,song,gate,vid]=P[n-1];const wi=Math.floor((n-1)/7);const d=((n-1)%7)+1;const blocks=[];const bump=Math.min(24,wi*2);
   const ex=id=>{if(id==='call1')return {nof:1,t:'Note caller: white keys',h:'RH',n:callerNotes(n,10,false),bpm:40,how:['Play the key that lights up. Say its name out loud.','No stickers. Find each one from the black-key groups.']};
     if(id==='call2')return {nof:1,t:'Note caller: black keys too',h:'RH',n:callerNotes(n+7,12,true),bpm:40,how:['Black keys now. C# and Db are the same key.']};
@@ -589,24 +613,74 @@ function buildDay(n){const [t,tech,nw,song,gate,vid]=P[n-1];const wi=Math.floor(
     if(id==='ch4')return chordEx(['C','G','Am','F'],'The four chords: C, G, Am, F');
     if(id==='chEmDm')return chordEx(['Em','Dm','Am','C'],'Minor chords: Em, Dm, Am');
     if(id==='ch6')return chordEx(SET6,'Six chords: C G Am F Em Dm');
-    if(id.startsWith('loop:')){const [,lid,st]=id.split(':');return loopEx(lid,+st)}
+    if(id.startsWith('loop:')){const [,lid,st]=id.split(':');const ps=PIXS.length?PIX_BY_TITLE(LOOP[lid].t):null;return ps?pixLoopEx(ps,+st,false):loopEx(lid,+st)}
     const e=EX[id];return Object.assign({},e,{bpm:e.bpm+bump})};
   if(d===1)blocks.push(mk('self','Posture check',2,{items:POSTURE}));
   blocks.push(mk('ex','Technique',5,{ex:ex(tech),cue:HAND_RULES[(n-1)%HAND_RULES.length]}));
   if(typeof nw==='string'&&nw.startsWith('rhythm'))blocks.push(mk('rhythm','New today',10,{rhythm:rhythmSpec(nw,wi)}));
   else if(typeof nw==='string')blocks.push(mk('ex','New today',10,{ex:ex(nw),gate:gate==='x'}));
   else blocks.push(mk('self','New today',10,{items:nw}));
-  let sEx,sTitle,loopId=null;
-  if(song.startsWith('loop:')){const [,lid,st]=song.split(':');sEx=loopEx(lid,+st);loopId=lid;sTitle='Song: '+LOOP[lid].t}
+  let sEx,sTitle,loopId=null,pixSong=null,pixItems=[];
+  const PIXMAP={kalho:'Kal Ho Naa Ho',pehla:'Pehla Nasha',tumhiho:'Tum Hi Ho',lagja:'Lag Ja',zara:'Zara Zara',dil:'Dil Diyan'};
+  const sid0=song.split(':')[1];const pixTitle=song.startsWith('loop:')?LOOP[sid0].t:PIXMAP[sid0];const psg=pixTitle&&PIXS.length?PIX_BY_TITLE(pixTitle):null;
+  if(psg){OCC[psg.id]=(OCC[psg.id]||0)+1;const k=OCC[psg.id];const total=psg.lines.length;const to=Math.min(total-1,2*k-1);sEx=pixEx(psg,0,to,false);sTitle='Song: '+psg.title.replace(/\s*[-–]\s*Notations?/i,'');pixSong=psg;
+    if(song.startsWith('loop:')){const st=+song.split(':')[2];pixItems=[`Left hand: ${STEPS[st]} on the chords shown above each line.`]}}
+  else if(song.startsWith('loop:')){const [,lid,st]=song.split(':');sEx=loopEx(lid,+st);loopId=lid;sTitle='Song: '+LOOP[lid].t}
   else{const [,sid,range]=song.split(':');if(range){const [a,b]=range.split('-').map(Number);sEx=songEx(sid,a,b)}else sEx=songEx(sid);sTitle='Song: '+SONGS[sid].t}
   if(!loopId&&typeof nw==='string'&&nw.startsWith('loop:'))loopId=nw.split(':')[1];
-  blocks.push(mk('ex',sTitle,8,{ex:sEx,gate:gate==='s'}));
+  blocks.push(mk('ex',sTitle,8,{ex:sEx,gate:gate==='s',items:pixItems}));
   if(!blocks.some(b=>b.gate)){const last=blocks.filter(b=>b.type==='ex').pop();last.gate=true}
   const links=[];const v=vlink(vid);if(v)links.push(v);
   if(loopId&&LOOP[loopId].v)links.push({t:'PIX Series · '+LOOP[loopId].t+' tutorial (Hindi)',u:'https://youtu.be/'+LOOP[loopId].v});
   if(loopId&&LOOP[loopId].n)links.push({t:LOOP[loopId].t+' notation and chords (pixseries.com)',u:'https://pixseries.com/'+LOOP[loopId].n+'/'});
   return {n,week:wi+1,d,theme:W13[wi][0],goal:W13[wi][1],title:t,blocks,videos:[],video:links[0]||null,links,milestone:/check/.test(t)||n===90};
 }
+/* ---- PIX songs (local data only: window.PIX_SONGS from pix-songs.js, never published) ---- */
+const PCN={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const pcOf=t=>{let p=PCN[t[0]];if(t[1]==='#')p++;if(t[1]==='b')p--;return (p+12)%12};
+const KS_MAJ=[6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88],KS_MIN=[6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+function corr(a,b){const ma=a.reduce((x,y)=>x+y)/12,mb=b.reduce((x,y)=>x+y)/12;let n=0,da=0,db=0;for(let i=0;i<12;i++){n+=(a[i]-ma)*(b[i]-mb);da+=(a[i]-ma)**2;db+=(b[i]-mb)**2}return n/Math.sqrt(da*db||1)}
+function chordRoot(c){const m=/^\(?([A-G])(#|b)?(m(?!aj))?/.exec(c);if(!m)return null;return {pc:pcOf(m[1]+(m[2]||'')),minor:!!m[3]}}
+function detectKey(song){const h=new Array(12).fill(0);song.lines.forEach(l=>l.notes.forEach(t=>h[pcOf(t)]++));
+  const chords=song.lines.flatMap(l=>l.chords).map(chordRoot).filter(Boolean);
+  let best={score:-9};for(let t=0;t<12;t++)for(const minor of [false,true]){const prof=minor?KS_MIN:KS_MAJ;const rot=h.map((_,i)=>h[(i+t)%12]);let sc=corr(rot,prof);
+    if(chords.length){const f=chords[0],l=chords[chords.length-1];if(f.pc===t&&f.minor===minor)sc+=.3;if(l.pc===t&&l.minor===minor)sc+=.2;sc+=.4*chords.filter(c=>c.pc===t&&c.minor===minor).length/chords.length}
+    if(sc>best.score)best={tonic:t,minor,score:sc}}return best}
+const NAMES_SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],NAMES_FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+function keyName(k){return (k.minor?NAMES_SHARP:NAMES_FLAT)[k.tonic]+(k.minor?' minor':' major')}
+function transposeChord(c,sh){return c.replace(/([A-G])(#|b)?/g,(m)=>{const p=(pcOf(m)+sh+120)%12;return NAMES_FLAT[p].replace('Gb','F#')})}
+// returns {lines:[{lyric,chords,midis}], key, shift}
+function prepareSong(song,original){const k=detectKey(song);let sh=0;const tot=song.lines.reduce((a,l)=>a+l.notes.length,0)||1;const blk0=song.lines.reduce((a,l)=>a+l.notes.filter(t=>t.length>1).length,0)/tot;if(!original&&blk0>0.03){const target=k.minor?9:0;sh=((target-k.tonic)%12+12)%12;if(sh>6)sh-=12}
+  let prev=null;const lines=song.lines.map(l=>{const ms=l.notes.map(t=>{const pc=(pcOf(t)+sh+120)%12;let m;if(prev==null){m=60+pc;if(m>71)m-=12}else{m=prev-((prev-pc)%12+12)%12;if(prev-m>6)m+=12}if(m>79)m-=12;if(m<53)m+=12;prev=m;return m});return {lyric:l.lyric,chords:l.chords.map(c=>transposeChord(c,sh)),midis:ms}});
+  const all=lines.flatMap(l=>l.midis).sort((a,b)=>a-b);const med=all[Math.floor(all.length/2)]||64;let oct=0;while(med+oct>71)oct-=12;while(med+oct<58)oct+=12;
+  if(oct)lines.forEach(l=>l.midis=l.midis.map(m=>m+oct));
+  const fx=getFixes()[song.url]||{};
+  lines.forEach((l,li)=>{const src=song.lines[li];const g=src.g&&src.g.reduce((a,b)=>a+b,0)===l.midis.length?src.g:l.midis.map(()=>1);
+    l.durs=[];l.wstarts=[];l.wodd=[];let k=0;g.forEach((n,gi)=>{l.wstarts.push(k);for(let j=0;j<n;j++){l.durs.push(n===1?1:n===2?.5:Math.round(100/n)/100);l.wodd.push(gi%2);k++}});
+    if(l.durs.length)l.durs[l.durs.length-1]+=1;
+    l.fing={};l.midis=l.midis.map((m,ni)=>{const f=fx[li+':'+ni];if(f&&f.f)l.fing[ni]=f.f;return f&&f.o?m+f.o:m})});
+  const black=lines.flatMap(l=>l.midis).filter(isBlack).length;
+  return {lines,key:k,shift:sh,from:keyName(k),to:keyName({tonic:(k.tonic+sh+120)%12,minor:k.minor}),black}}
+function getFixes(){try{return S.fixes||{}}catch(e){try{return (JSON.parse(localStorage.getItem('pianoCoach.v1'))||{}).fixes||{}}catch(e2){return {}}}}
+const PIXS=(window.PIX_SONGS||[]).filter(s=>s.lines&&s.lines.length>=2).map((s,i)=>Object.assign(s,{id:'p'+i}));
+const PIX_ALIAS={'raabta':'raabata','kalhonaaho':'kalhonaho','lagja':'lagjaagale','lagjaagale':'lagjaagale','gulabiaankhen':'gulabiaankhein','saaridunivajaladenge':'saariduniya','saaridunivajala':'saariduniya','saaridunijajaladenge':'saariduniya','saariduniyajaladenge':'saariduniya'};
+const normT=t=>t.toLowerCase().replace(/[^a-z]/g,'');
+const PIX_BY_TITLE=t=>{const k=PIX_ALIAS[normT(t)]||normT(t);return PIXS.find(s=>normT(s.title).startsWith(k))||PIXS.find(s=>normT(s.title).includes(k))};
+function pixEx(song,from=0,to,original){const p=prepareSong(song,original??S.settings.origKey);to=to==null?p.lines.length-1:Math.min(to,p.lines.length-1);const ls=p.lines.slice(from,to+1);
+  const lineStarts=[],rowLyrics=[],rowChords=[],wodd=[];let ns=[],ds=[],fixF=[];ls.forEach(l=>{lineStarts.push(ns.length);rowLyrics.push(l.lyric);rowChords.push(l.chords);ns=ns.concat(l.midis);ds=ds.concat(l.durs);wodd.push(...l.wodd);l.midis.forEach((_,ni)=>fixF.push(l.fing[ni]||0))});
+  const autoF=autoFinger(ns,false,ds);const fing=autoF.map((f,i)=>fixF[i]||f);
+  const part=(from===0&&to===p.lines.length-1)?'full':(from===to?`line ${from+1}`:`lines ${from+1} to ${to+1}`);
+  return {t:song.title,part,h:'RH',n:ns.map((m,i)=>midiName(m)+(ds[i]!==1?':'+ds[i]:'')).join(' '),f:fing.join(' '),bpm:76,lineStarts,rowLyrics,rowChords,wodd,pix:song.id,url:song.url,from,to,keyInfo:p.shift?`Moved from ${p.from} to ${p.to}`:`In ${p.from}`,
+    how:['Each row is one line of the song: chords on top, the words, then the notes with fingers.','Tap any row to practise just that line. The mic follows you.',p.shift?`Moved from ${p.from} to ${p.to} so it sits on white keys. Switch to the original key in Setup to match the PIX video.`:`Original key: ${p.from}.`,'Rhythm is not written on PIX pages. Sing the line in your head and follow the words.']}}
+function chordPattern(seq){if(seq.length<3)return seq.length?[...seq,...seq]:['C','G'];
+  for(let p=2;p<=8;p++){if(seq.length<2*p)break;const n=Math.min(seq.length,4*p);let hit=0;for(let i=0;i<n;i++)if(seq[i]===seq[i%p])hit++;if(hit/n>=.75){const pat=seq.slice(0,p);return [...pat,...pat]}}
+  const counts={};for(let i=0;i+4<=seq.length;i++){const k=seq.slice(i,i+4).join(' ');counts[k]=(counts[k]||0)+1}const best=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(best&&best[1]>=2){const pat=best[0].split(' ');return [...pat,...pat]}return seq.slice(0,8)}
+function pixLoopEx(song,step,original){const p=prepareSong(song,original??S.settings.origKey);const seq=[];p.lines.forEach(l=>l.chords.forEach(c=>{const r=chordRoot(c);if(r&&(!seq.length||seq[seq.length-1]!==c))seq.push(c)}));
+  const uniq=chordPattern(seq);const ns=[],fs=[],ls=[],lab=[];uniq.forEach(c=>{const r=chordRoot(c);let root=36+r.pc;while(root<40)root+=12;while(root>51)root-=12;const t=root+(r.minor?3:4),f=root+7;ls.push(ns.length);lab.push(c);
+    if(step<=2){ns.push(midiName(root)+':4');fs.push(5)}else if(step===3){ns.push(midiName(root),midiName(t),midiName(f)+':2');fs.push(5,3,1)}else{[root,f,root+12,f].forEach(m=>ns.push(midiName(m)));fs.push(5,2,1,2)}});
+  return {t:`${song.title}: left hand, ${STEPS[step]}`,h:'LH',n:ns.join(' '),f:fs.join(' '),bpm:60,lineStarts:ls,rowLabels:lab,pix:song.id,how:[`The song's main chord pattern: ${uniq.slice(0,uniq.length/2|0||uniq.length).join(' ')}, played twice.`,STEP_HOW[step]]}}
+
 const WEEKS=W13.map(([theme,goal])=>({theme,goal}));
 const REVIEW_SONGS={};
 const DAYS=Array.from({length:90},(_,i)=>buildDay(i+1));
@@ -753,7 +827,7 @@ const ukey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Str
 /* ---- Learning loop: yesterday-cold retrieval, fix-it loop, spaced review (Leitner) ---- */
 const INTERVALS=[0,1,2,4,7,14]; // days until due, by box 1..5
 function addDays(k,n){const [y,m,d]=k.split('-').map(Number);const t=new Date(y,m-1,d+n);return ukey(t)}
-function snapEx(ex){const o={};['t','h','n','f','bpm','how','song','part','film','lineStarts','nof','rowLabels','loop'].forEach(k=>{if(ex[k]!=null)o[k]=ex[k]});return o}
+function snapEx(ex){const o={};['t','h','n','f','bpm','how','song','part','film','lineStarts','nof','rowLabels','loop','rowLyrics','rowChords','pix','keyInfo','wodd','url','from','to'].forEach(k=>{if(ex[k]!=null)o[k]=ex[k]});return o}
 function updateSkill(b,sum){if(!b.ex||sum.self)return;const k=bestKey(b);const sk=S.skills[k]||{box:0,ex:snapEx(b.ex),base:b.ex.bpm};
   const acc=sum.accuracy;sk.box=acc>=90?Math.min(5,sk.box+1):acc<70?1:Math.max(1,sk.box);sk.due=addDays(todayKey(),INTERVALS[sk.box]);sk.last=todayKey();sk.acc=acc;sk.wrongAt=sum.wrongAt||[];
   if(!b.review&&!b.fix)sk.ex=snapEx(b.ex);S.skills[k]=sk}
@@ -806,7 +880,6 @@ function todayHTML(){
   <section class="card pad" style="margin-top:20px">
     <div class="row" style="align-items:flex-start"><div style="flex:1"><div class="eyebrow">Day ${n} · ${day.minutes} minutes</div><h2 style="font-size:22px;font-weight:800;margin-top:4px">${esc(day.title)}</h2></div></div>
     <ul class="blocks" style="margin-top:8px">${blocks}</ul>
-    ${day.video?`<a class="vlink" style="margin-top:12px" href="${day.video.u}" target="_blank" rel="noopener">${ICON.yt}<span>${esc(day.video.t)}</span></a>`:''}
     <p class="tiny" style="margin-top:8px">Pass the test with ${S.settings.pass}% to unlock Day ${Math.min(90,n+1)}.</p>
   </section>
   <details class="card pad" style="margin-top:16px"><summary style="cursor:pointer;font-weight:700;list-style:none" class="row"><span style="flex:1">How each class works</span><span class="pill sky">Why</span></summary>
@@ -838,7 +911,20 @@ function planHTML(){
 const TIER_COLORS=['#1FBF86','#3BA8FF','#8B6CFF','#FF7A45','#FF4D6D'];
 const TIER_DAY=[22,36,57,78,91];
 let songTier=0,songQuery='';
-function songsHTML(){
+const LVL_CACHE={};
+function songLevel(sg){if(LVL_CACHE[sg.id])return LVL_CACHE[sg.id];const p=prepareSong(sg,false);const ms=p.lines.flatMap(l=>l.midis);const share=p.black/Math.max(1,ms.length);const range=Math.max(...ms)-Math.min(...ms);
+  let lv=1+(share>.02?1:0)+(share>.1?1:0)+(range>15?1:0)+(ms.length>220?1:0);lv=Math.min(5,lv);return LVL_CACHE[sg.id]={lv,lines:p.lines.length,notes:ms.length}}
+let pixQuery='',pixTier=0;
+function pixSongsHTML(){const list=PIXS.map(sg=>Object.assign({sg},songLevel(sg))).filter(x=>(!pixTier||x.lv===pixTier)&&(!pixQuery||(x.sg.title+' '+(x.sg.film||'')).toLowerCase().includes(pixQuery.toLowerCase())))
+    .sort((a,b)=>a.lv-b.lv||(b.sg.views||0)-(a.sg.views||0));
+  return list.slice(0,pixTier||pixQuery?400:80).map(x=>{const v=x.sg.views;const vs=v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?Math.round(v/1e3)+'K':'';
+    return `<button class="songrow" data-pix="${x.sg.id}">${pixTier?'':`<span class="tier" style="background:${TIER_COLORS[x.lv-1]}">${x.lv}</span>`}<span style="flex:1;min-width:0"><b class="ell" style="font-weight:700">${esc(x.sg.title.replace(/\s*[-–]\s*Notations?/i,''))}</b><span class="tiny ell">${esc(x.sg.film||(x.lines+' lines'))}</span></span><span class="chev">›</span></button>`}).join('')||'<p class="muted" style="padding:12px 0">No songs match.</p>'}
+function songsHTML(){if(PIXS.length)return `${statBar()}<header class="stack"><h1>Songs</h1><p class="muted small">${PIXS.length} songs, easiest first.</p></header>
+  <div class="seg segscroll" style="margin-top:16px">${[0,1,2,3,4,5].map(t=>`<button class="${pixTier===t?'on':''}" data-ptier="${t}">${t===0?'All':'Level '+t}</button>`).join('')}</div>
+  <input id="pixQ" placeholder="Search a song or film" value="${esc(pixQuery)}" style="margin-top:12px;width:100%;height:48px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:0 14px;font:inherit;font-size:16px">
+  <div id="pixList" class="card pad" style="margin-top:12px;padding-top:12px;padding-bottom:6px">${pixSongsHTML()}</div>`;
+  return songsHTMLOld()}
+function songsHTMLOld(){
   const practice=Object.keys(SONGS).sort((a,b)=>SONG_UNLOCK[a]-SONG_UNLOCK[b]);
   let html=`${statBar()}<header class="stack"><h1>Songs</h1><p class="muted">Practice songs check every note with the mic. The library has ${CATALOG.length} songs from PIX Series, sorted by difficulty and popularity, each with its video tutorial and notation.</p></header>
   <h2 style="margin-top:20px">Practise with the mic</h2><div class="card pad" style="margin-top:10px;padding-top:6px;padding-bottom:6px">`;
@@ -870,6 +956,7 @@ function micHTML(){
   <section class="card pad stack" style="margin-top:16px">
     <h2>Notation</h2>${seg('notation',[['both','C + Sa'],['letters','C D E'],['sargam','Sa Re Ga']],n)}
     <p class="tiny">Lowercase sargam is komal (flat): re ga dha ni. MA is tivra Ma (F#). A dot before means lower octave, an apostrophe after means upper.</p>
+    <h2 style="margin-top:12px">Song key</h2>${seg('origKey',[['0','White keys (C / A minor)'],['1','Original key']],S.settings.origKey?'1':'0')}
     <h2 style="margin-top:12px">Theme</h2>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']],th)}
     <h2 style="margin-top:12px">A clean run means</h2>${seg('pass',[['70','70%'],['80','80%'],['90','90%']],String(S.settings.pass))}
   </section>
@@ -908,13 +995,16 @@ function bindView(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{view=b.dataset.tab;planOpen=null;if(freeH){Ear.handlers.delete(freeH);freeH=null}render();window.scrollTo(0,0)});
   document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startSession(+b.dataset.start));
   document.querySelectorAll('[data-node]').forEach(b=>b.onclick=()=>{const n=+b.dataset.node;if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}startSession(n)});
+  document.querySelectorAll('[data-pix]').forEach(b=>b.onclick=()=>startPix(b.dataset.pix));
+  document.querySelectorAll('[data-ptier]').forEach(b=>b.onclick=()=>{pixTier=+b.dataset.ptier;render()});
+  const pq=$('#pixQ');if(pq)pq.oninput=()=>{pixQuery=pq.value;$('#pixList').innerHTML=pixSongsHTML();document.querySelectorAll('[data-pix]').forEach(b=>b.onclick=()=>startPix(b.dataset.pix))};
   document.querySelectorAll('[data-loop]').forEach(b=>b.onclick=()=>startLoop(b.dataset.loop));
   document.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{songTier=+b.dataset.tier;render()});
   const sq=$('#songQ');if(sq)sq.oninput=()=>{songQuery=sq.value;$('#libList').innerHTML=libRows()};
   document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{const n=+b.dataset.day;planOpen=planOpen===n?null:n;render()});
   document.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>{if(b.dataset.song)startSong(b.dataset.song)});
   const pp=$('#printPlan');if(pp)pp.onclick=()=>{const d=document.querySelectorAll('.daydetail');window.print()};
-  document.querySelectorAll('[data-set]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=g.dataset.set;S.settings[k]=k==='pass'?+b.dataset.v:b.dataset.v;save();applyTheme();render()}));
+  document.querySelectorAll('[data-set]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=g.dataset.set;S.settings[k]=k==='pass'?+b.dataset.v:k==='origKey'?b.dataset.v==='1':b.dataset.v;save();applyTheme();render()}));
   const sens=$('#sens');if(sens)sens.oninput=()=>{S.settings.sens=+(7.6-+sens.value).toFixed(1);save()};
   const mt=$('#micToggle');if(mt)mt.onclick=async()=>{if(Ear.on&&freeH){earStop();Ear.handlers.delete(freeH);freeH=null;render();return}
     const ok=await startMicWithCalib($('#heardS'));if(!ok)return;bindFree();mt.textContent='Stop'};
@@ -946,6 +1036,8 @@ async function wake(on){try{if(on&&'wakeLock' in navigator){wakeLock=await navig
 document.addEventListener('visibilitychange',()=>{if(SES&&document.visibilityState==='visible')wake(true)});
 function startLoop(id){const L=LOOP[id];const day={n:0,title:L.t,theme:'Chord loop',blocks:[1,3,4].map(st=>mk('ex','Left hand: '+STEPS[st],5,{ex:loopEx(id,st),gate:st===1})),links:[L.v?{t:'PIX Series · '+L.t+' tutorial (Hindi)',u:'https://youtu.be/'+L.v}:null,L.n?{t:L.t+' notation and chords',u:'https://pixseries.com/'+L.n+'/'}:null].filter(Boolean)};
   SES={n:0,day,bi:0,started:Date.now(),blockStart:Date.now(),scores:{},progress:{},selfDone:{},notesPlayed:0,wrong:0,songId:null,loopId:id};wake(true);renderSession()}
+function startPix(id){const sg=PIXS.find(x=>x.id===id);const ex=pixEx(sg);const day={n:0,title:sg.title,theme:'Song',blocks:[mk('ex','Melody',10,{ex,gate:true}),mk('ex','Left hand: roots',5,{ex:pixLoopEx(sg,1)}),mk('ex','Left hand: chords',5,{ex:pixLoopEx(sg,3)})],links:sg.video?[{t:'Optional: PIX Series video for this song',u:sg.video}]:[]};
+  SES={n:0,day,bi:0,started:Date.now(),blockStart:Date.now(),scores:{},progress:{},selfDone:{},notesPlayed:0,wrong:0,songId:null,pixId:id};wake(true);renderSession()}
 function startSong(id){const ex=songEx(id);const day={n:0,title:SONGS[id].t,theme:'Song practice',blocks:[mk('ex','Song: '+SONGS[id].t,10,{ex,gate:true})],videos:['bolly']};
   SES={n:0,day,bi:0,started:Date.now(),blockStart:Date.now(),scores:{},progress:{},selfDone:{},notesPlayed:0,wrong:0,songId:id};wake(true);renderSession()}
 function closeSession(){stopCheck();stopMetro();clearInterval(SES&&SES.timerInt);saveSession();wake(false);SES=null;const el=$('.session');el&&el.remove();render()}
@@ -956,7 +1048,7 @@ function renderSession(){
   const {day,bi}=SES;const b=day.blocks[bi];SES.blockStart=Date.now();
   const segs=day.blocks.map((_,i)=>`<i class="${i<bi?'done':i===bi?'on':''}"></i>`).join('');
   let content='';
-  if(b.type==='ex')content=exHTML(b);else if(b.type==='rhythm')content=rhythmHTML(b);else content=`<div class="row" style="gap:8px"><span class="pill sky">Tick each one when done</span></div><h1 style="font-size:28px">${esc(b.title==='New today'?day.title:b.title)}</h1>${selfHTML(b.items)}${keyboardHTML(48,71)}`;
+  if(b.type==='ex'&&SES.focus&&SES.focus.bi===bi)content=`<div class="focusbar"><span style="flex:1">Practising line ${SES.focus.row+1} only</span><button class="btn btn-sm btn-line" id="unfocus">Whole song</button></div>`+exHTML(focusBlock(b));else if(b.type==='ex')content=exHTML(b);else if(b.type==='rhythm')content=rhythmHTML(b);else content=`<div class="row" style="gap:8px"><span class="pill sky">Tick each one when done</span></div><h1 style="font-size:28px">${esc(b.title==='New today'?day.title:b.title)}</h1>${selfHTML(b.items)}${keyboardHTML(48,71)}`;
   const vids=day.links&&day.links.length?day.links:day.video?[day.video]:(day.videos||[]).map(k=>PIX[k]).filter(Boolean);
   const isLast=bi===day.blocks.length-1;
   el.innerHTML=`<div class="s-top"><div class="s-top-inner"><button aria-label="Close" id="sClose" class="iconbtn">${ICON.x}</button><div class="bar"><i style="width:${Math.max(4,bi/day.blocks.length*100)}%"></i></div><div class="timer" id="timer">${b.minutes}:00</div></div><div class="s-title"><span>${day.n?'Day '+day.n+' · ':''}${esc(b.title)}</span><span>${bi+1} of ${day.blocks.length}</span></div></div>
@@ -967,13 +1059,14 @@ function renderSession(){
   <div class="s-foot"><div class="s-foot-inner">${bi>0?'<button class="btn btn-ghost btn-icon" id="sPrev" aria-label="Previous block">‹</button>':''}${b.type==='ex'?`<button class="btn btn-ghost fbtn grow" id="hear" aria-label="Hear it">${ICON.play}<span>Hear it</span></button><button class="btn btn-ghost btn-icon" id="restart" aria-label="Start over">↺</button>`:'<span class="spacer"></span>'}<button class="btn ${isLast?'btn-accent':'btn-primary'} fbtn" id="sNext">${isLast?'Finish':'Next'}</button></div></div>`;
   el.scrollTop=0;
   $('#sClose').onclick=()=>{if(confirm('Leave this class? Your progress today is saved. You can continue later.'))closeSession()};
-  $('#sNext').onclick=()=>{if(isLast)finishSession();else{SES.bi++;saveSession();renderSession()}};
-  const pv=$('#sPrev');if(pv)pv.onclick=()=>{SES.bi--;saveSession();renderSession()};
+  $('#sNext').onclick=()=>{SES.edit=false;SES.focus=null;if(isLast)finishSession();else{SES.bi++;saveSession();renderSession()}};
+  const pv=$('#sPrev');if(pv)pv.onclick=()=>{SES.edit=false;SES.focus=null;SES.bi--;saveSession();renderSession()};
   const total=b.minutes*60;SES.timerInt=setInterval(()=>{const t=$('#timer');if(!t)return;const left=total-Math.floor((Date.now()-SES.blockStart)/1000);
     t.textContent=(left<0?'+':'')+Math.floor(Math.abs(left)/60)+':'+String(Math.abs(left)%60).padStart(2,'0');t.classList.toggle('over',left<0);if(left===0&&!SES.chimed){SES.chimed=true;chime()}},500);SES.chimed=false;
   bindSelf(el);
   const ib=$('#infoBtn'),sb=$('#sheetBg');if(ib&&sb){ib.onclick=()=>{sb.hidden=false};sb.onclick=e=>{if(e.target===sb||e.target.id==='sheetClose')sb.hidden=true}}
-  if(b.type==='ex')bindEx(b);else if(b.type==='rhythm')bindRhythm(b);
+  if(b.type==='ex'&&SES.focus&&SES.focus.bi===bi){bindEx(focusBlock(b));$('#unfocus').onclick=()=>{SES.focus=null;renderSession()}}
+  else if(b.type==='ex'){bindEx(b);document.querySelectorAll('.lrow').forEach((r,ri)=>r.onclick=()=>{SES.focus={bi,a:+r.dataset.a,z:+r.dataset.z,row:ri};renderSession()})}else if(b.type==='rhythm')bindRhythm(b);
 }
 function selfHTML(items,inner){const key=SES.bi;return (inner?'':'<div class="card pad">')+items.map((t,i)=>{const on=SES.selfDone[key+':'+i];return `<button class="check${on?' on':''}" data-chk="${key}:${i}"><span class="box"></span><span>${esc(t)}</span></button>`}).join('')+(inner?'':'</div>')}
 function bindSelf(el){el.querySelectorAll('[data-chk]').forEach(b=>b.onclick=()=>{const k=b.dataset.chk;SES.selfDone[k]=!SES.selfDone[k];b.classList.toggle('on')})}
@@ -990,13 +1083,17 @@ function noteRows(ex,notes){const ls=ex.lineStarts&&ex.lineStarts.length>1?ex.li
   if(ls){ls.forEach((a,i)=>rows.push([a,i+1<ls.length?ls[i+1]:notes.length]))}else{const per=notes.length<=10?notes.length:8;for(let a=0;a<notes.length;a+=per)rows.push([a,Math.min(notes.length,a+per)])}
   // split very long lines
   return rows}
+function focusBlock(b){const f=SES.focus;const ex=b.ex;const ns=ex.n.split(' ').slice(f.a,f.z);const fs=fingersFor(ex).slice(f.a,f.z);
+  return Object.assign({},b,{gate:false,ex:Object.assign({},ex,{n:ns.join(' '),f:fs.join(' '),lineStarts:[0],rowLyrics:[ex.rowLyrics[f.row]],rowChords:[ex.rowChords[f.row]],wodd:ex.wodd?ex.wodd.slice(f.a,f.z):null,focusRow:f.row,part:'line '+(f.row+1)})})}
 function exHTML(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);
   const ms=notes.map(x=>x.m);const lo=Math.min(...ms),hi=Math.max(...ms);
-  const chip=(x,i)=>{const L=noteLabel(x.m);return `<div class="chip" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}</div><div class="s">${esc(L.small)}</div></div>`};
-  const grid=noteRows(ex,notes).map(([a,z],r)=>`<div class="nrow" data-lab="${ex.rowLabels&&ex.rowLabels[r]?esc(ex.rowLabels[r]):''}">${ex.rowLabels&&ex.rowLabels[r]?`<div class="rlab">${esc(ex.rowLabels[r])}</div>`:''}${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div>`).join('');
+  const chip=(x,i)=>{const L=noteLabel(x.m);return `<div class="chip${ex.wodd&&ex.wodd[i]?' w1':''}" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}</div><div class="s">${esc(L.small)}</div></div>`};
+  if(ex.rowLyrics){const g=noteRows(ex,notes).map(([a,z],r)=>`<div class="lrow" data-a="${a}" data-z="${z}"><div class="lhead">${(ex.rowChords[r]||[]).map(c=>`<span class="cchip">${esc(c)}</span>`).join('')}<span class="lyr">${esc(ex.rowLyrics[r]||'')}</span></div><div class="nrow">${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div></div>`).join('');
+    var gridL=g}
+  const grid=gridL||noteRows(ex,notes).map(([a,z],r)=>`<div class="nrow" data-lab=""${ex.rowLabels&&ex.rowLabels[r]?esc(ex.rowLabels[r]):''}">${ex.rowLabels&&ex.rowLabels[r]?`<div class="rlab">${esc(ex.rowLabels[r])}</div>`:''}${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div>`).join('');
   const best=S.best[bestKey(b)];
-  return `<div class="row" style="align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><h1 class="extitle">${esc(ex.t)}</h1><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${b.gate?`<span class="pill accent" id="cleanPill">${SES.scores[SES.bi]&&SES.scores[SES.bi].passed?'Passed':`Test · ${notes.length>40?1:3} clean run${notes.length>40?'':'s'}`}</span>`:''}<span class="pill">${ex.h==='LH'?'Left hand':'Right hand'} · ${ex.bpm} bpm</span>${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div></div><button class="ibtn" id="infoBtn" aria-label="How to play">i</button></div>
-    <div id="micGate"></div><div class="hero" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say"></div><button class="linkbtn" id="skipN" hidden>Skip this note</button></div><div class="meter"><i id="mtr"></i></div></div>
+  return `<div class="row" style="align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><h1 class="extitle">${esc(ex.t)}</h1><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${b.gate&&!ex.rowLyrics?`<span class="pill accent" id="cleanPill">${SES.scores[SES.bi]&&SES.scores[SES.bi].passed?'Passed':`Test · ${notes.length>40?1:3} clean run${notes.length>40?'':'s'}`}</span>`:''}<span class="pill${ex.rowLyrics&&b.gate?' accent':''}"${ex.rowLyrics&&b.gate?' id="cleanPill"':''}>${ex.rowLyrics&&b.gate?(SES.scores[SES.bi]&&SES.scores[SES.bi].passed?'Passed · ':'Test · '):''}${ex.h==='LH'?'Left hand':'Right hand'}${ex.rowLyrics?(ex.keyInfo?' · '+esc(ex.keyInfo.replace('In ','')):''):' · '+ex.bpm+' bpm'}</span>${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div></div>${ex.url?`<button class="ibtn" id="editBtn" aria-label="Fix notes" title="Fix a note's octave or finger" style="font-size:16px">✎</button>`:''}<button class="ibtn" id="infoBtn" aria-label="How to play">i</button></div>
+    <div id="micGate"></div><div class="hero${ex.rowLyrics?' compact':''}" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say"></div><button class="linkbtn" id="skipN" hidden>Skip this note</button></div><div class="meter"><i id="mtr"></i></div></div>
     <div id="kbx">${keyboardHTML(Math.min(lo,60),Math.max(hi,71))}</div>
     <div class="ngrid${ex.rowLabels&&notes.length/(ex.lineStarts||[1]).length<=4?' grid2':''}" id="strip">${grid}</div>
     <div id="exResult"></div>`}
@@ -1029,8 +1126,26 @@ function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fing
         status(b.gate&&sum.passed&&sum.clean===need?'Test passed. Keep playing or tap Next.':sum.accuracy>=S.settings.pass?'Clean. Again for another clean run.':'Again, slower. Starting over.');setTimeout(()=>{if(checkState&&checkState.wm===wm)startRound(false)},2600)}});
     const h=f=>{updMeter(f);wm.onFrame(f)};checkState={h,wm};Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
     if(SYNTH_MIC&&window.__autoplay&&!window.__noAuto)window.__autoplay(notes,ex.bpm)}
+  const eb=$('#editBtn');
+  if(eb){const setEdit=on=>{SES.edit=on;eb.style.background=on?'var(--sky)':'';eb.style.color=on?'#fff':'';strip.querySelectorAll('.chip').forEach(c=>c.classList.toggle('editable',on));if(on){stopCheck();status('Tap a note to fix its octave or finger.')}else micOn()};
+    eb.onclick=()=>setEdit(!SES.edit);
+    strip.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',e=>{if(!SES.edit)return;e.stopPropagation();openFix(b,+c.dataset.i,notes,fingers)}));
+    if(SES.edit){setEdit(true);return}}
   if(Ear.on||S.micOk)micOn();else{status('Tap Hear it to listen first.');$('#micGate').innerHTML=`<button class="btn btn-accent btn-block" id="micBtn">Turn on the mic</button><p class="tiny" style="text-align:center;margin-top:6px">Once. After that it just listens while you play.</p>`;$('#micBtn').onclick=()=>{$('#micGate').innerHTML='';micOn()}}
 }
+function openFix(b,i,notes,fingers){const ex=b.ex;const ls=ex.lineStarts||[0];let r=0;ls.forEach((a,k)=>{if(a<=i)r=k});const row=ex.focusRow!=null?ex.focusRow:r;const li=ex.from+row,ni=i-ls[r];
+  const old=$('#fixBg');old&&old.remove();const d=document.createElement('div');d.className='sheet-bg';d.id='fixBg';
+  d.innerHTML=`<div class="sheet"><div class="grab"></div><h2>Fix this note</h2><p class="muted" style="margin-top:4px">${esc(spoken(notes[i].m))}, finger ${fingers[i]||'?'}. Your fix is saved for this song.</p>
+    <div class="row" style="gap:8px;margin-top:14px"><button class="btn btn-line grow" data-fx="o:12">Octave up</button><button class="btn btn-line grow" data-fx="o:-12">Octave down</button></div>
+    <div class="eyebrow" style="margin-top:16px">Finger</div><div class="row" style="gap:6px;margin-top:6px">${[1,2,3,4,5].map(f=>`<button class="btn ${f===+fingers[i]?'btn-primary':'btn-line'} grow" style="padding:0" data-fx="f:${f}">${f}</button>`).join('')}</div>
+    <div class="row" style="gap:8px;margin-top:16px"><button class="btn btn-ghost grow" data-fx="reset">Reset</button><button class="btn btn-accent grow" data-fx="done">Done</button></div></div>`;
+  $('.session').appendChild(d);
+  d.onclick=e=>{if(e.target===d){d.remove();return}const t=e.target.closest('[data-fx]');if(!t)return;const v=t.dataset.fx;if(v==='done'){d.remove();return}
+    S.fixes=S.fixes||{};const F=S.fixes[ex.url]=S.fixes[ex.url]||{};const k=li+':'+ni;const cur=F[k]||{};
+    if(v==='reset')delete F[k];else{const [kind,val]=v.split(':');if(kind==='o')cur.o=Math.max(-24,Math.min(24,(cur.o||0)+(+val)));else cur.f=+val;F[k]=cur}
+    save();const sg=PIXS.find(x=>x.url===ex.url);const blk=SES.day.blocks[SES.bi];blk.ex=pixEx(sg,blk.ex.from,blk.ex.to);
+    const nm=parseNotes(blk.ex.n);const gi=(blk.ex.lineStarts[li-blk.ex.from]||0)+ni;if(nm[gi])pluck(nm[gi].m,ac().currentTime+.05,.6,.25);
+    d.remove();renderSession();toast('Saved')}}
 function lineStartBefore(ex,i){const ls=ex.lineStarts||[0];let r=0;for(const x of ls)if(x<=i)r=x;return r}
 function direction(heard,want){const d=want-heard;const W=spoken(want);
   if(Math.abs(d)%12===0&&d!==0)return `Right note, wrong octave. ${W} ${d>0?'higher':'lower'}.`;
@@ -1092,7 +1207,7 @@ function finishSession(){stopCheck();stopMetro();clearInterval(SES.timerInt);
   const el=$('.session');const C=2*Math.PI*80;const col=passed?'var(--ok)':acc>=S.settings.pass-15?'var(--accent)':'var(--bad)';
   const attempts=rec?rec.attempts:0;
   let head,sub,actions;
-  if(!day.n){head=passed?'Nice.':'Keep going.';sub=`${SES.songId?SONGS[SES.songId].t:LOOP[SES.loopId].t}. Practise songs any time.`;actions=`<button class="btn btn-primary btn-block" id="rDone">Done</button>`}
+  if(!day.n){head=passed?'Nice.':'Keep going.';sub=`${SES.songId?SONGS[SES.songId].t:SES.pixId?SES.day.title:LOOP[SES.loopId].t}. Practise songs any time.`;actions=`<button class="btn btn-primary btn-block" id="rDone">Done</button>`}
   else if(passed){head=day.n===90?'You did it.':`Day ${day.n} done.`;sub=day.n===90?'90 days. From finding middle C to a recital. Keep the recordings.':`Day ${day.n+1} is unlocked. Come back tomorrow, or start it now if you have time left.`;
     actions=`<button class="btn btn-accent btn-block" id="rDone">Done for today</button>${day.n<90?`<button class="btn btn-ghost btn-block" id="rNext">Start Day ${day.n+1} now</button>`:''}`}
   else if(missing.length){head='Test not taken.';sub=`Play the test block${gates.length>1?'s':''} with "Check me" to unlock the next day. ${missing.map(i=>day.blocks[i].title).join(', ')}.`;
