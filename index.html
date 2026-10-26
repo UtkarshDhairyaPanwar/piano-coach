@@ -116,7 +116,7 @@ h2{font-size:19px;font-weight:700}
 .tabs-inner{max-width:440px;margin:0 auto;display:flex;justify-content:space-around}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--ink-3);padding:6px 14px;border-radius:14px;border:2px solid transparent}
 .tab svg{width:26px;height:26px}
-.tab.on{color:var(--sky);background:var(--sky-soft);border-color:color-mix(in srgb,var(--sky) 40%,transparent)}
+.tab.on{color:var(--accent-d);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
 .startbar{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 16px 12px;z-index:19;pointer-events:none}
 .startbar .btn{pointer-events:auto;max-width:608px;margin:0 auto;display:flex;height:56px}
 
@@ -207,6 +207,14 @@ h2{font-size:19px;font-weight:700}
 .lhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:2px 2px 0}
 .cchip{font-size:12px;font-weight:800;color:#fff;background:var(--grape);padding:2px 8px;border-radius:8px}
 .lyr{flex:0 0 100%;font-size:15px;font-weight:600;color:var(--ink)}
+.rhy{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rhy select{height:42px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;padding:0 8px}
+.tapbig{display:block;margin:18px auto;width:170px;height:170px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:28px;box-shadow:0 8px 0 var(--accent-d);touch-action:manipulation}
+.tapbig:active{transform:translateY(6px);box-shadow:0 2px 0 var(--accent-d)}
+.chip{position:relative}
+.dbar{position:absolute;left:6px;bottom:3px;height:3px;border-radius:2px;background:var(--sky);opacity:.55;max-width:calc(100% - 12px)}
+.chip.cur .dbar{background:#fff}
+.chip.meh{background:var(--gold-soft);border-color:var(--gold-d);box-shadow:0 3px 0 var(--gold-d)}
 .focusbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--accent-soft);font-weight:700}
 .segscroll{display:flex;overflow-x:auto;scrollbar-width:none;max-width:100%}
 .segscroll button{flex:none}
@@ -658,19 +666,22 @@ function prepareSong(song,original){const k=detectKey(song);let sh=0;const tot=s
   lines.forEach((l,li)=>{const src=song.lines[li];const g=src.g&&src.g.reduce((a,b)=>a+b,0)===l.midis.length?src.g:l.midis.map(()=>1);
     l.durs=[];l.wstarts=[];l.wodd=[];let k=0;g.forEach((n,gi)=>{l.wstarts.push(k);for(let j=0;j<n;j++){l.durs.push(n===1?1:n===2?.5:Math.round(100/n)/100);l.wodd.push(gi%2);k++}});
     if(l.durs.length)l.durs[l.durs.length-1]+=1;
+    const rz=getRhythm()[song.url];if(rz&&rz.lines&&rz.lines[li]&&rz.lines[li].length===l.midis.length){l.durs=rz.lines[li].slice();l.rset=true}
     l.fing={};l.midis=l.midis.map((m,ni)=>{const f=fx[li+':'+ni];if(f&&f.f)l.fing[ni]=f.f;return f&&f.o?m+f.o:m})});
   const black=lines.flatMap(l=>l.midis).filter(isBlack).length;
-  return {lines,key:k,shift:sh,from:keyName(k),to:keyName({tonic:(k.tonic+sh+120)%12,minor:k.minor}),black}}
+  const rz0=getRhythm()[song.url];
+  return {rbpm:rz0&&rz0.bpm,lines,key:k,shift:sh,from:keyName(k),to:keyName({tonic:(k.tonic+sh+120)%12,minor:k.minor}),black}}
+function getRhythm(){try{return S.rhythm||{}}catch(e){try{return (JSON.parse(localStorage.getItem('pianoCoach.v1'))||{}).rhythm||{}}catch(e2){return {}}}}
 function getFixes(){try{return S.fixes||{}}catch(e){try{return (JSON.parse(localStorage.getItem('pianoCoach.v1'))||{}).fixes||{}}catch(e2){return {}}}}
 const PIXS=(window.PIX_SONGS||[]).filter(s=>s.lines&&s.lines.length>=2).map((s,i)=>Object.assign(s,{id:'p'+i}));
 const PIX_ALIAS={'raabta':'raabata','kalhonaaho':'kalhonaho','lagja':'lagjaagale','lagjaagale':'lagjaagale','gulabiaankhen':'gulabiaankhein','saaridunivajaladenge':'saariduniya','saaridunivajala':'saariduniya','saaridunijajaladenge':'saariduniya','saariduniyajaladenge':'saariduniya'};
 const normT=t=>t.toLowerCase().replace(/[^a-z]/g,'');
 const PIX_BY_TITLE=t=>{const k=PIX_ALIAS[normT(t)]||normT(t);return PIXS.find(s=>normT(s.title).startsWith(k))||PIXS.find(s=>normT(s.title).includes(k))};
 function pixEx(song,from=0,to,original){const p=prepareSong(song,original??S.settings.origKey);to=to==null?p.lines.length-1:Math.min(to,p.lines.length-1);const ls=p.lines.slice(from,to+1);
-  const lineStarts=[],rowLyrics=[],rowChords=[],wodd=[];let ns=[],ds=[],fixF=[];ls.forEach(l=>{lineStarts.push(ns.length);rowLyrics.push(l.lyric);rowChords.push(l.chords);ns=ns.concat(l.midis);ds=ds.concat(l.durs);wodd.push(...l.wodd);l.midis.forEach((_,ni)=>fixF.push(l.fing[ni]||0))});
+  const lineStarts=[],rowLyrics=[],rowChords=[],wodd=[],rowRset=[];let ns=[],ds=[],fixF=[];ls.forEach(l=>{lineStarts.push(ns.length);rowRset.push(!!l.rset);rowLyrics.push(l.lyric);rowChords.push(l.chords);ns=ns.concat(l.midis);ds=ds.concat(l.durs);wodd.push(...l.wodd);l.midis.forEach((_,ni)=>fixF.push(l.fing[ni]||0))});
   const autoF=autoFinger(ns,false,ds);const fing=autoF.map((f,i)=>fixF[i]||f);
   const part=(from===0&&to===p.lines.length-1)?'full':(from===to?`line ${from+1}`:`lines ${from+1} to ${to+1}`);
-  return {t:song.title,part,h:'RH',n:ns.map((m,i)=>midiName(m)+(ds[i]!==1?':'+ds[i]:'')).join(' '),f:fing.join(' '),bpm:76,lineStarts,rowLyrics,rowChords,wodd,pix:song.id,url:song.url,from,to,keyInfo:p.shift?`Moved from ${p.from} to ${p.to}`:`In ${p.from}`,
+  return {t:song.title,part,h:'RH',n:ns.map((m,i)=>midiName(m)+(ds[i]!==1?':'+ds[i]:'')).join(' '),f:fing.join(' '),bpm:p.rbpm||76,lineStarts,rowLyrics,rowChords,rowRset,wodd,pix:song.id,url:song.url,from,to,keyInfo:p.shift?`Moved from ${p.from} to ${p.to}`:`In ${p.from}`,
     how:['Each row is one line of the song: chords on top, the words, then the notes with fingers.','Tap any row to practise just that line. The mic follows you.',p.shift?`Moved from ${p.from} to ${p.to} so it sits on white keys. Switch to the original key in Setup to match the PIX video.`:`Original key: ${p.from}.`,'Rhythm is not written on PIX pages. Sing the line in your head and follow the words.']}}
 function chordPattern(seq){if(seq.length<3)return seq.length?[...seq,...seq]:['C','G'];
   for(let p=2;p<=8;p++){if(seq.length<2*p)break;const n=Math.min(seq.length,4*p);let hit=0;for(let i=0;i<n;i++)if(seq[i]===seq[i%p])hit++;if(hit/n>=.75){const pat=seq.slice(0,p);return [...pat,...pat]}}
@@ -854,7 +865,7 @@ function render(){
 function tabsHTML(){const t=(id,l)=>`<button class="tab${view===id?' on':''}" data-tab="${id}">${ICON[id]}${l}</button>`;
   return `<nav class="tabs no-print"><div class="tabs-inner">${t('today','Today')}${t('plan','Plan')}${t('songs','Songs')}${t('mic','Setup')}</div></nav>`}
 
-function currentDayNum(){return Math.min(90,S.unlocked)}
+function currentDayNum(){const last=S.lastDay||1;const done=S.days[last]&&S.days[last].passed;if(!done)return last;for(let d=last+1;d<=90;d++){if(!(S.days[d]&&S.days[d].passed))return d}return 90} // where you left off, not blocked by older tests
 const IC={
   fire:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5 5.6 5 10.5A5 5 0 0 1 12 18a5 5 0 0 1-5-5.2c0-2 1-3.4 2-4.3.2 1.5 1 2.5 2 2.8C10.6 8.5 11 5 12 2z"/><path d="M12 22a7 7 0 0 1-7-7h2a5 5 0 0 0 10 0h2a7 7 0 0 1-7 7z" opacity=".35"/></svg>',
   gem:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3h10l4 6-9 12L3 9z"/><path d="M3 9h18M9 3l3 6 3-6M12 9v12" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none"/></svg>',
@@ -867,14 +878,14 @@ const IC={
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 5v16M8 7h7"/></svg>',
   keys:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="20" height="16" rx="3" opacity=".3"/><rect x="5" y="4" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="9" rx="1"/><rect x="16" y="4" width="3" height="9" rx="1"/></svg>',
 };
-const UNIT_COLORS=[['#8B6CFF','#6B4DE0'],['#3BA8FF','#1F86DB'],['#1FBF86','#16A06F'],['#FF7A45','#DE5A26'],['#FF4D9A','#D9327A'],['#FFB020','#D98E00']];
+const UNIT_COLORS=[['#14A88A','#0E8A70'],['#FF7A45','#DE5A26'],['#E8457F','#C42E63'],['#E39A12','#BF7F00'],['#1FBF86','#16A06F'],['#F0603A','#CC4520']];
 const BLOCK_COLORS={'Yesterday, cold':'#1FBF86','Fix yesterday':'#FF4D6D','Review':'#1FBF86','Posture check':'#8B6CFF','New today':'#FF4D9A','Warm-up':'#FFB020','Technique':'#8B6CFF','Scales and chords':'#3BA8FF','Rhythm':'#FF4D9A','Review':'#1FBF86'};
 const blockColor=b=>BLOCK_COLORS[b.title]||(b.gate?'#FF7A45':'#3BA8FF');
 const ukey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 /* ---- Learning loop: yesterday-cold retrieval, fix-it loop, spaced review (Leitner) ---- */
 const INTERVALS=[0,1,2,4,7,14]; // days until due, by box 1..5
 function addDays(k,n){const [y,m,d]=k.split('-').map(Number);const t=new Date(y,m-1,d+n);return ukey(t)}
-function snapEx(ex){const o={};['t','h','n','f','bpm','how','song','part','film','lineStarts','nof','rowLabels','loop','rowLyrics','rowChords','pix','keyInfo','wodd','url','from','to'].forEach(k=>{if(ex[k]!=null)o[k]=ex[k]});return o}
+function snapEx(ex){const o={};['t','h','n','f','bpm','how','song','part','film','lineStarts','nof','rowLabels','loop','rowLyrics','rowChords','pix','keyInfo','wodd','url','from','to','rowRset'].forEach(k=>{if(ex[k]!=null)o[k]=ex[k]});return o}
 function updateSkill(b,sum){if(!b.ex||sum.self)return;const k=bestKey(b);const sk=S.skills[k]||{box:0,ex:snapEx(b.ex),base:b.ex.bpm};
   const acc=sum.accuracy;sk.box=acc>=90?Math.min(5,sk.box+1):acc<70?1:Math.max(1,sk.box);sk.due=addDays(todayKey(),INTERVALS[sk.box]);sk.last=todayKey();sk.acc=acc;sk.wrongAt=sum.wrongAt||[];
   if(!b.review&&!b.fix)sk.ex=snapEx(b.ex);S.skills[k]=sk}
@@ -901,7 +912,7 @@ function composeDay(n){const base=DAYS[n-1];const day=Object.assign({},base,{blo
   const yb=inject.find(b=>b.title!=='Review'),rb=inject.find(b=>b.title==='Review');
   if(rb&&si>=0)day.blocks.splice(si,0,rb);if(yb)day.blocks.splice(wi+1,0,yb);
   fit(day);day.minutes=day.blocks.reduce((a,b)=>a+b.minutes,0);return day}
-function statBar(){return `<div class="statbar"><div class="stati day">${IC.cal}<span>Day ${Math.min(90,S.unlocked)}</span></div><div class="stati fire">${IC.fire}<span>${streak()}</span></div><div class="stati xp">${IC.gem}<span>${S.xp||0} XP</span></div></div>`}
+function statBar(){return `<div class="statbar"><div class="stati day">${IC.cal}<span>Day ${currentDayNum()}</span></div><div class="stati fire">${IC.fire}<span>${streak()}</span></div><div class="stati xp">${IC.gem}<span>${S.xp||0} XP</span></div></div>`}
 function unitBanner(wi,withBtn){const w=WEEKS[wi];const [c,d]=UNIT_COLORS[wi%UNIT_COLORS.length];
   return `<div class="unit" style="background:${c};box-shadow:0 4px 0 ${d}"><div style="flex:1;min-width:0"><div class="eyebrow">Week ${wi+1} of 13</div><h2>${esc(w.theme)}</h2><p>${esc(w.goal)}</p></div>${withBtn?`<button class="ubtn" data-tab="plan" aria-label="Open the plan">${IC.book}</button>`:''}</div>`}
 function nodeIcon(d){if(d.milestone)return IC.trophy;if(d.d===7)return IC.star;return IC.note}
@@ -912,7 +923,7 @@ function todayHTML(){
   const lastDone=passedToday.length?passedToday[passedToday.length-1]:0;
   const wi=day.week-1;const weekDays=DAYS.filter(d=>d.week===day.week);
   const offs=[0,48,72,48,0,-48,-72];
-  const nodes=weekDays.map((d,i)=>{const st=S.days[d.n];const done=st&&st.passed;const cur=d.n===n&&!allDone;const locked=d.n>S.unlocked;
+  const nodes=weekDays.map((d,i)=>{const st=S.days[d.n];const done=st&&st.passed;const cur=d.n===n&&!allDone;const locked=false;
     return `<div style="transform:translateX(${offs[i%7]}px)"><button class="node ${done?'done':cur?'cur':'locked'}" data-node="${d.n}" aria-label="Day ${d.n}">${cur&&!(lastDone&&lastDone!==n)?'<span class="bubble">START</span>':''}${done?IC.check:locked?(d.milestone?IC.trophy:IC.lock):nodeIcon(d)}<span class="lbl">Day ${d.n}</span></button></div>`}).join('');
   const dows=['M','T','W','T','F','S','S'];const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
   const week=dows.map((l,i)=>{const dd=new Date(mon);dd.setDate(mon.getDate()+i);const k=ukey(dd);return `<div class="wd${S.practice.includes(k)?' done':''}${k===todayKey()?' today':''}"><b>${IC.check.replace('stroke-width="3.5"','stroke-width="4" width="16" height="16"')}</b>${l}</div>`}).join('');
@@ -927,7 +938,7 @@ function todayHTML(){
   <section class="card pad" style="margin-top:20px">
     <div class="row" style="align-items:flex-start"><div style="flex:1"><div class="eyebrow">Day ${n} · ${day.minutes} minutes</div><h2 style="font-size:22px;font-weight:800;margin-top:4px">${esc(day.title)}</h2></div></div>
     <ul class="blocks" style="margin-top:8px">${blocks}</ul>
-    <p class="tiny" style="margin-top:8px">Pass the test with ${S.settings.pass}% to unlock Day ${Math.min(90,n+1)}.</p>
+    <p class="tiny" style="margin-top:8px">Every day is open. Passing the test marks this day done.</p>
   </section>
   <details class="card pad" style="margin-top:16px"><summary style="cursor:pointer;font-weight:700;list-style:none" class="row"><span style="flex:1">How each class works</span><span class="pill sky">Why</span></summary>
     <ol class="how" style="margin-top:10px">
@@ -943,11 +954,11 @@ function todayHTML(){
 function blockSub(b){if(b.type==='ex'){return b.ex.t+(b.ex.part&&b.ex.part!=='full'?', '+b.ex.part:'')}if(b.type==='rhythm')return `Metronome ${b.rhythm.bpm} bpm, ${b.rhythm.beats} beats`;return b.items?b.items[0]:''}
 
 function planHTML(){
-  let html=`${statBar()}<header class="stack"><h1>The 90-day course</h1><p class="muted">One 30-minute class a day. Each day opens when you pass the one before. Tap a day to see what is new that day. Every class also opens with yesterday's test played from memory, and mixes in one older item that is due for review.</p>
+  let html=`${statBar()}<header class="stack"><h1>The 90-day course</h1><p class="muted">One 30-minute class a day. Every day is open: go in order, or jump to any day you want. Tap a day to see what is new that day. Every class also opens with yesterday's test played from memory, and mixes in one older item that is due for review.</p>
   <button class="btn btn-line btn-sm no-print" id="printPlan">Print the plan</button></header>`;
   WEEKS.forEach((w,wi)=>{const days=DAYS.filter(d=>d.week===wi+1);if(!days.length)return;
     html+=`<section class="wk">${unitBanner(wi,false)}`;
-    days.forEach(d=>{const st=S.days[d.n];const locked=d.n>S.unlocked;const cur=d.n===S.unlocked;const done=st&&st.passed;
+    days.forEach(d=>{const st=S.days[d.n];const locked=false;const cur=d.n===S.unlocked;const done=st&&st.passed;
       const stat=done?`<span class="pill ok">${st.best}%</span>`:cur?`<span class="pill accent">Today</span>`:locked?`<span class="dstat" style="color:var(--ink-3)">${IC.lock.replace('<svg','<svg width="18" height="18"')}</span>`:'';
       html+=`<button class="dayrow${locked?' locked':''}${cur?' cur':''}${done?' done':''}" data-day="${d.n}"><span class="dnum">${d.n}</span><span style="flex:1;min-width:0"><b style="font-weight:700;font-size:16px">${esc(d.title)}</b><span class="tiny" style="display:block">${d.minutes} min${d.milestone?' · milestone test':''}</span></span>${stat}</button>`;
       if(planOpen===d.n){html+=`<div class="daydetail"><ol>${d.blocks.map(b=>`<li><b>${esc(b.title)}</b> (${b.minutes} min): ${b.type==='self'?esc(b.items.join(' ')):esc(blockSub(b))+(b.items&&b.items.length?'. '+esc(b.items.join(' ')):'')}</li>`).join('')}</ol>
@@ -1041,7 +1052,7 @@ function updMeter(f){const m=$('#mtr');if(m)m.style.height=Math.min(100,f.rms/Ma
 function bindView(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{view=b.dataset.tab;planOpen=null;if(freeH){Ear.handlers.delete(freeH);freeH=null}render();window.scrollTo(0,0)});
   document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startSession(+b.dataset.start));
-  document.querySelectorAll('[data-node]').forEach(b=>b.onclick=()=>{const n=+b.dataset.node;if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}startSession(n)});
+  document.querySelectorAll('[data-node]').forEach(b=>b.onclick=()=>startSession(+b.dataset.node));
   document.querySelectorAll('[data-pix]').forEach(b=>b.onclick=()=>startPix(b.dataset.pix));
   document.querySelectorAll('[data-ptier]').forEach(b=>b.onclick=()=>{pixTier=+b.dataset.ptier;render()});
   const pq=$('#pixQ');if(pq)pq.oninput=()=>{pixQuery=pq.value;$('#pixList').innerHTML=pixSongsHTML();document.querySelectorAll('[data-pix]').forEach(b=>b.onclick=()=>startPix(b.dataset.pix))};
@@ -1071,7 +1082,7 @@ function bindFree(){if(freeH)Ear.handlers.delete(freeH);const kb=$('#freeKb');le
    8. Session
    ========================================================= */
 let SES=null;
-function startSession(n){if(n>S.unlocked){toast('Locked. Finish Day '+S.unlocked+' first.');return}
+function startSession(n){S.lastDay=n;
   const rec=S.days[n]||(S.days[n]={attempts:0,best:0,passed:false});
   const prev=rec.session&&rec.session.date===todayKey()&&!rec.passed?rec.session:null;
   const day=prev&&prev.blocks?Object.assign({},DAYS[n-1],{blocks:prev.blocks}):composeDay(n);
@@ -1131,15 +1142,16 @@ function noteRows(ex,notes){const ls=ex.lineStarts&&ex.lineStarts.length>1?ex.li
   // split very long lines
   return rows}
 function focusBlock(b){const f=SES.focus;const ex=b.ex;const ns=ex.n.split(' ').slice(f.a,f.z);const fs=fingersFor(ex).slice(f.a,f.z);
-  return Object.assign({},b,{gate:false,ex:Object.assign({},ex,{n:ns.join(' '),f:fs.join(' '),lineStarts:[0],rowLyrics:[ex.rowLyrics[f.row]],rowChords:[ex.rowChords[f.row]],wodd:ex.wodd?ex.wodd.slice(f.a,f.z):null,focusRow:f.row,part:'line '+(f.row+1)})})}
+  return Object.assign({},b,{gate:false,ex:Object.assign({},ex,{n:ns.join(' '),f:fs.join(' '),lineStarts:[0],rowLyrics:[ex.rowLyrics[f.row]],rowChords:[ex.rowChords[f.row]],rowRset:ex.rowRset?[ex.rowRset[f.row]]:null,wodd:ex.wodd?ex.wodd.slice(f.a,f.z):null,focusRow:f.row,part:'line '+(f.row+1)})})}
 function exHTML(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fingersFor(ex);
   const ms=notes.map(x=>x.m);const lo=Math.min(...ms),hi=Math.max(...ms);
-  const chip=(x,i)=>{const L=noteLabel(x.m);return `<div class="chip${ex.wodd&&ex.wodd[i]?' w1':''}" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}</div><div class="s">${esc(L.small)}</div></div>`};
+  const chip=(x,i)=>{const L=noteLabel(x.m);return `<div class="chip${ex.wodd&&ex.wodd[i]?' w1':''}" data-i="${i}"><div class="f">${fingers[i]||''}</div><div class="l">${esc(L.big)}</div><div class="s">${esc(L.small)}</div><i class="dbar" style="width:${Math.min(100,Math.round(x.d*45))}%"></i></div>`};
   if(ex.rowLyrics){const g=noteRows(ex,notes).map(([a,z],r)=>`<div class="lrow" data-a="${a}" data-z="${z}"><div class="lhead">${(ex.rowChords[r]||[]).map(c=>`<span class="cchip">${esc(c)}</span>`).join('')}<span class="lyr">${esc(ex.rowLyrics[r]||'')}</span></div><div class="nrow">${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div></div>`).join('');
     var gridL=g}
   const grid=gridL||noteRows(ex,notes).map(([a,z],r)=>`<div class="nrow" data-lab=""${ex.rowLabels&&ex.rowLabels[r]?esc(ex.rowLabels[r]):''}">${ex.rowLabels&&ex.rowLabels[r]?`<div class="rlab">${esc(ex.rowLabels[r])}</div>`:''}${notes.slice(a,z).map((x,j)=>chip(x,a+j)).join('')}</div>`).join('');
   const best=S.best[bestKey(b)];
   return `<div class="row" style="align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><h1 class="extitle">${esc(ex.t)}</h1><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap">${b.gate&&!ex.rowLyrics?`<span class="pill accent" id="cleanPill">${SES.scores[SES.bi]&&SES.scores[SES.bi].passed?'Passed':`Test · ${notes.length>40?1:3} clean run${notes.length>40?'':'s'}`}</span>`:''}<span class="pill${ex.rowLyrics&&b.gate?' accent':''}"${ex.rowLyrics&&b.gate?' id="cleanPill"':''}>${ex.rowLyrics&&b.gate?(SES.scores[SES.bi]&&SES.scores[SES.bi].passed?'Passed · ':'Test · '):''}${ex.h==='LH'?'Left hand':'Right hand'}${ex.rowLyrics?(ex.keyInfo?' · '+esc(ex.keyInfo.replace('In ','')):''):' · '+ex.bpm+' bpm'}</span>${best!=null?`<span class="pill ok">Best ${best}%</span>`:''}</div></div>${ex.url?`<button class="ibtn" id="editBtn" aria-label="Fix notes" title="Fix a note's octave or finger" style="font-size:16px">✎</button>`:''}<button class="ibtn" id="infoBtn" aria-label="How to play">i</button></div>
+    ${(ex.url&&ex.focusRow!=null)||ex.song?`<div class="rhy">${ex.url?`<span class="pill ${ex.rowRset&&ex.rowRset[0]?'ok':''}">${ex.rowRset&&ex.rowRset[0]?'Rhythm: yours':'Rhythm: guessed'}</span><button class="btn btn-sm btn-line" id="tapBtn">Set rhythm</button>`:''}<button class="btn btn-sm btn-primary" id="timeBtn">Play in time</button><select id="tempo" aria-label="Tempo">${[50,60,70,80,90,100,110,120].concat([ex.bpm]).filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b).map(v=>`<option ${v===ex.bpm?'selected':''} value="${v}">${v} bpm</option>`).join('')}</select></div>`:''}
     <div id="micGate"></div><div class="hero${ex.rowLyrics?' compact':''}" id="hero"><div class="hero-note" id="heroNote"></div><div class="hero-side"><div class="hero-f" id="heroF"></div><div class="hero-say" id="say"></div><button class="linkbtn" id="skipN" hidden>Skip this note</button></div><div class="meter"><i id="mtr"></i></div></div>
     <div id="kbx">${keyboardHTML(Math.min(lo,60),Math.max(hi,71))}</div>
     <div class="ngrid${ex.rowLabels&&notes.length/(ex.lineStarts||[1]).length<=4?' grid2':''}" id="strip">${grid}</div>
@@ -1177,6 +1189,41 @@ function bindEx(b){const ex=b.ex;const notes=parseNotes(ex.n);const fingers=fing
       hint:a=>{status('Starting over? Keep playing.')}},0,{lineStarts:ex.lineStarts||[]});
     const h=f=>{updMeter(f);wm.onFrame(f)};checkState={h,wm};Ear.handlers.add(h);$('#skipN').onclick=()=>wm.skip();
     if(SYNTH_MIC&&window.__autoplay&&!window.__noAuto)window.__autoplay(notes,ex.bpm)}
+  // ---- rhythm: set it once by tapping, then play in time ----
+  const tapB=$('#tapBtn'),timeB=$('#timeBtn');
+  if(tapB)tapB.onclick=()=>{stopCheck();const times=[];let k=0;
+    const d=document.createElement('div');d.className='sheet-bg';d.id='tapBg';
+    d.innerHTML=`<div class="sheet" style="text-align:center"><div class="grab"></div><h2>Tap the rhythm</h2><p class="muted" style="margin-top:4px">Hum the line in your head. Tap once per note, in time. Each tap plays the next note.</p>
+      <div class="tiny" id="tapCount" style="margin-top:10px">0 of ${notes.length}</div>
+      <button class="tapbig" id="tapGo">TAP</button><button class="btn btn-ghost btn-block" id="tapCancel">Cancel</button></div>`;
+    $('.session').appendChild(d);
+    const tap=()=>{if(k>=notes.length)return;const c=ac();pluck(notes[k].m,c.currentTime+.01,.4,.3);times.push(performance.now());setCur(k);k++;$('#tapCount').textContent=`${k} of ${notes.length}`;
+      if(k===notes.length)setTimeout(finish,350)};
+    const key=e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();e.stopPropagation();tap()}};document.addEventListener('keydown',key,true);
+    const close=()=>{document.removeEventListener('keydown',key,true);d.remove()};
+    $('#tapGo').onpointerdown=e=>{e.preventDefault();tap()};$('#tapCancel').onclick=()=>{close();renderSession()};
+    function finish(){close();const iv=[];for(let i=0;i<times.length-1;i++)iv.push(times[i+1]-times[i]);const sorted=iv.slice().sort((a,b)=>a-b);const beat=sorted[Math.floor(sorted.length/2)]||500;
+      const Q=[.25,.5,.75,1,1.5,2,3,4];const q=v=>Q.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);
+      const durs=iv.map(v=>q(v/beat));durs.push(Math.max(1,durs[durs.length-1]||1));
+      const li=ex.from+(ex.focusRow||0);S.rhythm=S.rhythm||{};const R=S.rhythm[ex.url]=S.rhythm[ex.url]||{lines:{}};R.lines[li]=durs;R.bpm=Math.max(40,Math.min(160,Math.round(60000/beat)));save();
+      const sg=PIXS.find(x=>x.url===ex.url);const blk=SES.day.blocks[SES.bi];blk.ex=pixEx(sg,blk.ex.from,blk.ex.to);renderSession();toast('Rhythm saved for this line')}};
+  if(timeB)timeB.onclick=async()=>{stopCheck();const ok=await startMicWithCalib(say);if(!ok)return;
+    let bpm=ex.bpm||76;const beat=60000/bpm;const c=ac();strip.querySelectorAll('.chip').forEach(x=>x.classList.remove('ok','miss','meh','cur'));$('#exResult').innerHTML='';
+    status('Count in: 1 2 3 4');const t0=c.currentTime+.2;for(let i=0;i<4;i++)click(t0+i*beat/1000,i===0);
+    const start=performance.now()+200+4*beat;Ear.muteUntil=start-30;let acc=0;const T=notes.map(x=>{const t=start+acc*beat;acc+=x.d;return t});
+    const win=i=>Math.max(180,.45*notes[i].d*beat),tol=Math.max(90,.25*beat);let k=0,lastM=null;const res=notes.map(()=>null);
+    const tick=setInterval(()=>{const now=performance.now();let j=-1;T.forEach((t,i)=>{if(t<=now)j=i});if(j>=0&&j<notes.length)setCur(j);Ear.want=notes[Math.min(k,notes.length-1)].m;if(now>T[T.length-1]+win(notes.length-1))end()},30);
+    const h=f=>{while(k<notes.length&&f.t>T[k]+win(k)){res[k]='miss';const ch=chipAt(k);ch&&ch.classList.add('miss');k++}
+      if(k>=notes.length)return;const fresh=f.onset||(f.midi!=null&&f.midi!==lastM);
+      if(f.t>=T[k]-win(k)&&f.midi!=null&&fresh&&(f.midi===notes[k].m||(notes[k].m<60&&Math.abs(f.midi-notes[k].m)===12))){const off=f.t-T[k];res[k]=off;lastM=f.midi;const ch=chipAt(k);ch&&ch.classList.add(Math.abs(off)<=tol?'ok':'meh');k++}
+      if(f.midi!=null)lastM=f.midi};
+    Ear.handlers.add(h);setTimeout(()=>status('Play with the highlight.'),200+4*beat);
+    let ended=false;function end(){if(ended)return;ended=true;clearInterval(tick);Ear.handlers.delete(h);Ear.want=null;
+      const hits=res.filter(v=>typeof v==='number'),onT=hits.filter(v=>Math.abs(v)<=tol).length,avg=hits.length?hits.reduce((a,b)=>a+b,0)/hits.length:0;
+      const tip=hits.length<notes.length/2?'Many notes were missed. Try a slower tempo.':avg<-60?'You are rushing. Wait for the highlight.':avg>60?'You are a little late. Lead with the beat.':'Nice and steady.';
+      $('#exResult').innerHTML=`<div class="result ${onT>=notes.length*.8?'ok':'bad'}"><div class="display">${onT}/${notes.length}</div><div style="flex:1"><b>Notes on time</b><div class="small">${tip}</div></div></div>`;
+      status('Tap Play in time again, or keep practising notes.');logPractice()}};
+  const tm=$('#tempo');if(tm)tm.onchange=()=>{ex.bpm=+tm.value;const blk=SES.day.blocks[SES.bi];if(blk.ex.url){S.rhythm=S.rhythm||{};const R=S.rhythm[blk.ex.url]=S.rhythm[blk.ex.url]||{lines:{}};R.bpm=+tm.value;save()}blk.ex.bpm=+tm.value;toast(tm.value+' bpm')};
   const eb=$('#editBtn');
   if(eb){const setEdit=on=>{SES.edit=on;eb.style.background=on?'var(--sky)':'';eb.style.color=on?'#fff':'';strip.querySelectorAll('.chip').forEach(c=>c.classList.toggle('editable',on));if(on){stopCheck();status('Tap a note to fix its octave or finger.')}else micOn()};
     eb.onclick=()=>setEdit(!SES.edit);
@@ -1254,17 +1301,17 @@ function finishSession(){stopCheck();stopMetro();clearInterval(SES.timerInt);
   const mins=Math.max(1,Math.round((Date.now()-SES.started)/60000));
   logPractice();
   const xpGain=(SES.notesPlayed-SES.wrong)+(passed?20:0);S.xp=(S.xp||0)+Math.max(0,xpGain);
-  let rec=null;if(day.n){rec=S.days[day.n];rec.best=Math.max(rec.best||0,acc);if(passed){rec.passed=true;rec.date=todayKey();delete rec.session;if(S.unlocked===day.n)S.unlocked=day.n+1}}save();
+  let rec=null;if(day.n){rec=S.days[day.n];rec.best=Math.max(rec.best||0,acc);if(passed){rec.passed=true;rec.date=todayKey();delete rec.session;S.unlocked=Math.max(S.unlocked,day.n+1)}}save();
   const el=$('.session');const C=2*Math.PI*80;const col=passed?'var(--ok)':acc>=S.settings.pass-15?'var(--accent)':'var(--bad)';
   const attempts=rec?rec.attempts:0;
   let head,sub,actions;
   if(!day.n){head=passed?'Nice.':'Keep going.';sub=`${SES.songId?SONGS[SES.songId].t:SES.pixId?SES.day.title:LOOP[SES.loopId].t}. Practise songs any time.`;actions=`<button class="btn btn-primary btn-block" id="rDone">Done</button>`}
-  else if(passed){head=day.n===90?'You did it.':`Day ${day.n} done.`;sub=day.n===90?'90 days. From finding middle C to a recital. Keep the recordings.':`Day ${day.n+1} is unlocked. Come back tomorrow, or start it now if you have time left.`;
+  else if(passed){head=day.n===90?'You did it.':`Day ${day.n} done.`;sub=day.n===90?'90 days. From finding middle C to a recital. Keep the recordings.':`Next up: Day ${day.n+1}. Come back tomorrow, or start it now if you have time left.`;
     actions=`<button class="btn btn-accent btn-block" id="rDone">Done for today</button>${day.n<90?`<button class="btn btn-ghost btn-block" id="rNext">Start Day ${day.n+1} now</button>`:''}`}
-  else if(missing.length){head='Test not taken.';sub=`Play the test block${gates.length>1?'s':''} with "Check me" to unlock the next day. ${missing.map(i=>day.blocks[i].title).join(', ')}.`;
-    actions=`<button class="btn btn-accent btn-block" id="rRetry">Go to the test</button><button class="btn btn-ghost btn-block" id="rDone">Do it tomorrow</button>`}
+  else if(missing.length){head='Test not taken.';sub=`You skipped the test (${missing.map(i=>day.blocks[i].title).join(', ')}). That's fine: every day is open. Come back to it when you like.`;
+    actions=`<button class="btn btn-accent btn-block" id="rRetry">Go to the test</button><button class="btn btn-ghost btn-block" id="rDone">Do it tomorrow</button><button class="btn btn-line btn-block" id="rSkip">Go to Day ${Math.min(90,day.n+1)}</button>`}
   else{head='Almost.';sub=`The test needs clean runs in a row (${S.settings.pass}% or better). Slow down. Accuracy beats speed.`;
-    actions=`<button class="btn btn-accent btn-block" id="rRetry">Retake the test</button><button class="btn btn-ghost btn-block" id="rDone">Repeat this day tomorrow</button>${attempts>=3?'<button class="btn btn-line btn-block" id="rSkip">Move on anyway</button>':''}`}
+    actions=`<button class="btn btn-accent btn-block" id="rRetry">Retake the test</button><button class="btn btn-ghost btn-block" id="rDone">Repeat this day tomorrow</button><button class="btn btn-line btn-block" id="rSkip">Go to Day ${Math.min(90,day.n+1)}</button>`}
   el.innerHTML=`<div class="ob stack" style="text-align:center"><div class="ring"><svg width="180" height="180"><circle cx="90" cy="90" r="80" stroke="var(--surface-2)" stroke-width="12" fill="none"/><circle cx="90" cy="90" r="80" stroke="${col}" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" id="arc" style="transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)"/></svg><div class="v"><div><b>${missing.length?'–':acc+'%'}</b><div class="tiny">accuracy</div></div></div></div>
     <h1 style="font-size:32px;margin-top:16px">${head}</h1><p class="muted">${esc(sub)}</p>
     <div class="stats" style="margin-top:16px"><div class="stat gold"><span>Total XP</span><b>+${Math.max(0,xpGain)}</b></div><div class="stat ok"><span>Accuracy</span><b>${missing.length?'–':acc+'%'}</b></div><div class="stat sky"><span>Time</span><b>${mins}m</b></div></div>
@@ -1273,7 +1320,7 @@ function finishSession(){stopCheck();stopMetro();clearInterval(SES.timerInt);
   $('#rDone').onclick=()=>{closeSession();view='today';render()};
   const rn=$('#rNext');if(rn)rn.onclick=()=>{const k=day.n+1;closeSession();startSession(k)};
   const rr=$('#rRetry');if(rr)rr.onclick=()=>{SES.bi=(missing[0]!=null?missing[0]:gates.find(i=>!SES.scores[i].passed));renderSession()};
-  const sk=$('#rSkip');if(sk)sk.onclick=()=>{rec.passed=true;rec.skipped=true;rec.date=todayKey();if(S.unlocked===day.n)S.unlocked++;save();closeSession();view='today';render();toast('Moved on. Come back to Day '+day.n+' later.')};
+  const sk=$('#rSkip');if(sk)sk.onclick=()=>{const k=Math.min(90,day.n+1);closeSession();startSession(k)};
 }
 
 /* test hook for ?mic=synth: plays target notes into the analyser */
